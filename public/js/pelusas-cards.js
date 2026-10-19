@@ -308,9 +308,17 @@ function renderPelusaCard(value, options = {}) {
     ? `<div class="card-count-badge">x${options.badge}</div>` 
     : '';
 
+  // Medidas de seguridad inline para evitar que el SVG crezca sin límite si el CSS se retrasa
+  let inlineSizeStyle = 'max-width: 90px; width: 100%;';
+  if (sizeClass === 'tiny') inlineSizeStyle = 'max-width: 38px; width: 38px;';
+  else if (sizeClass === 'avatar') inlineSizeStyle = 'max-width: 60px; width: 100%; margin: 0 auto;';
+  else if (sizeClass === 'mini') inlineSizeStyle = 'max-width: 46px; width: 46px;';
+  else if (sizeClass === 'medium') inlineSizeStyle = 'max-width: 76px; width: 76px;';
+  else if (sizeClass === 'large') inlineSizeStyle = 'max-width: 120px; width: 120px;';
+
   return `
-    <div class="pelusa-card-wrapper card-val-${value} ${sizeClass} ${clickableClass}" data-value="${value}">
-      <svg class="pelusa-card-svg" viewBox="0 0 100 145" xmlns="http://www.w3.org/2000/svg">
+    <div class="pelusa-card-wrapper card-val-${value} ${sizeClass} ${clickableClass}" data-value="${value}" style="${inlineSizeStyle} display: inline-block; position: relative;">
+      <svg class="pelusa-card-svg" viewBox="0 0 100 145" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; display: block;">
         <defs>
           <linearGradient id="grad_${value}" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="${data.color2}" />

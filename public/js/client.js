@@ -108,6 +108,19 @@ socket.on('room_state', (state) => {
   }
 });
 
+socket.on('game_started', (state) => {
+  console.log('¡Partida iniciada!', state);
+  if (state && state.status === 'playing') {
+    renderGame(state);
+  }
+});
+
+socket.on('player_joined', (state) => {
+  if (state && state.players) {
+    updateLobbyPlayers(state.players, state.hostId);
+  }
+});
+
 socket.on('card_drawn', ({ card, busted, steals, gameEnded }) => {
   if (busted) {
     sounds.playBust();
@@ -194,11 +207,20 @@ function updateLobbyPlayers(players, hostId) {
   btnStartGame.style.display = isMeHost ? 'block' : 'none';
   btnStartGame.disabled = players.length < 2;
   if (players.length < 2 && isMeHost) {
-    btnStartGame.innerText = 'Esperando más jugadores (mínimo 2)...';
+    btnStartGame.innerText = '⏳ Esperando a tus amigos (mínimo 2 jugadores)...';
+    btnStartGame.classList.remove('btn-ready-pulse');
   } else if (isMeHost) {
-    btnStartGame.innerText = `¡Iniciar Partida (${players.length} jugadores)!`;
+    btnStartGame.innerText = `🚀 ¡Iniciar Partida (${players.length} jugadores)!`;
+    btnStartGame.classList.add('btn-ready-pulse');
   }
 }
+
+btnStartGame.onclick = () => {
+  console.log('Emitiendo start_game al servidor...');
+  btnStartGame.disabled = true;
+  btnStartGame.innerText = 'Iniciando partida...';
+  socket.emit('start_game');
+};
 
 // --- Renderizado del Juego ---
 function renderGame(state) {

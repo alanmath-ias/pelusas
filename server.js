@@ -12,7 +12,14 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Desactivar caché estático para asegurar que CSS y JS siempre se actualicen de inmediato
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  maxAge: 0,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  }
+}));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Pelusas - Juegos AlanMath', timestamp: new Date() });
@@ -30,13 +37,18 @@ function generateRoomCode() {
   return code;
 }
 
+// Emite el estado a todos los jugadores de la sala
 function broadcastRoom(room, eventName = 'room_state', extraData = null) {
   room.players.forEach(p => {
     const socket = io.sockets.sockets.get(p.id);
     if (socket) {
       const state = room.getStateFor(p.id);
       if (extraData) state.extra = extraData;
-      socket.emit(eventName, state);
+      // Emitir siempre room_state para que la interfaz se sincronice
+      socket.emit('room_state', state);
+      if (eventName !== 'room_state') {
+        socket.emit(eventName, { ...state, ...extraData });
+      }
     }
   });
 }
@@ -76,7 +88,7 @@ io.on('connection', (socket) => {
 
     currentRoomCode = code;
     socket.join(code);
-    broadcastRoom(room, 'room_state', { action: 'player_joined', player: res.player });
+    broadcastRoom(room, 'player_joined', { player: res.player });
   });
 
   // Iniciar partida
@@ -158,7 +170,6 @@ io.on('connection', (socket) => {
       const room = rooms.get(currentRoomCode);
       if (room) {
         room.removePlayer(socket.id);
-        // Si no quedan jugadores, eliminar la sala
         if (room.players.every(p => !p.connected)) {
           rooms.delete(currentRoomCode);
         } else {
