@@ -57,7 +57,9 @@ io.on('connection', (socket) => {
   socket.on('reconnect_session', ({ roomCode, playerToken }) => {
     if (!roomCode || !playerToken) return;
     const room = rooms.get(roomCode.trim().toUpperCase());
-    if (!room) return;
+    if (!room) {
+      return socket.emit('reconnect_failed', { message: 'La sala ya no existe' });
+    }
 
     const player = room.reconnectPlayer(socket.id, playerToken);
     if (player) {
@@ -66,6 +68,8 @@ io.on('connection', (socket) => {
       socket.join(room.code);
       socket.emit('reconnect_success', { state: room.getStateFor(socket.id) });
       broadcastRoom(room);
+    } else {
+      socket.emit('reconnect_failed', { message: 'No se encontró la sesión previa' });
     }
   });
 
@@ -95,25 +99,33 @@ io.on('connection', (socket) => {
       return socket.emit('error_msg', { message: 'No se encontró la sala especificada' });
     }
 
-    // Verificar si es una reconexión
-    const existingPlayer = room.players.find(p => p.token === playerToken);
+    // Verificar si es una reconexión legítima o una colisión de token (ej: 2 pestañas en la misma PC)
+    let actualToken = playerToken;
+    const existingPlayer = room.players.find(p => p.token === actualToken);
     if (existingPlayer) {
-      room.reconnectPlayer(socket.id, playerToken);
-      currentRoomCode = code;
-      currentPlayerToken = playerToken;
-      socket.join(code);
-      socket.emit('reconnect_success', { state: room.getStateFor(socket.id) });
-      return broadcastRoom(room);
+      const liveSocket = io.sockets.sockets.get(existingPlayer.id);
+      if (liveSocket && liveSocket.connected && existingPlayer.id !== socket.id) {
+        // La otra pestaña sigue conectada: crear un token separado para no sobreescribir al jugador 1
+        actualToken = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
+      } else {
+        room.reconnectPlayer(socket.id, actualToken);
+        currentRoomCode = code;
+        currentPlayerToken = actualToken;
+        socket.join(code);
+        socket.emit('reconnect_success', { state: room.getStateFor(socket.id) });
+        return broadcastRoom(room);
+      }
     }
 
-    const res = room.addPlayer(socket.id, playerName, avatar, playerToken);
+    const res = room.addPlayer(socket.id, playerName, avatar, actualToken);
     if (!res.success) {
       return socket.emit('error_msg', { message: res.error });
     }
 
     currentRoomCode = code;
-    currentPlayerToken = playerToken;
+    currentPlayerToken = actualToken;
     socket.join(code);
+    socket.emit('room_joined_success', { roomCode: code, state: room.getStateFor(socket.id), playerToken: actualToken });
     broadcastRoom(room, 'player_joined', { player: res.player });
   });
 

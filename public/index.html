@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=2.9">
+  <link rel="stylesheet" href="/css/style.css?v=3.0">
 </head>
 <body>
   <!-- Fondos dinámicos luminosos -->
@@ -25,6 +25,15 @@
 
     <!-- Formulario inicial para crear/unirse -->
     <div id="lobby-form-area" class="card-glass lobby-box">
+      <!-- Banner para cuando se entra por enlace de invitación -->
+      <div id="invite-banner" class="invite-banner" style="display: none;">
+        <div class="invite-banner-icon">📩</div>
+        <div class="invite-banner-content">
+          <div class="invite-banner-title">¡Te han invitado a una partida!</div>
+          <div class="invite-banner-sub">Te unirás a la sala <strong id="invite-room-code-badge" class="invite-code-pill">PELU-XXXX</strong></div>
+        </div>
+      </div>
+
       <div class="form-group">
         <label for="input-player-name">Tu Nombre o Apodo:</label>
         <input type="text" id="input-player-name" placeholder="Ej: Alan" maxlength="15" autofocus>
@@ -38,15 +47,30 @@
       </div>
 
       <div class="lobby-actions">
-        <button id="btn-create-room" class="btn btn-primary btn-large">
-          <span>✨ Crear Nueva Partida</span>
-        </button>
+        <!-- Modo Invitación (cuando la URL tiene ?room=...) -->
+        <div id="invite-actions-box" style="display: none;">
+          <button id="btn-quick-join" class="btn btn-accent btn-large btn-ready-pulse" style="width: 100%;">
+            <span>🚀 ¡Unirme a la Partida de Pelusas!</span>
+          </button>
+          <div class="invite-fallback-link">
+            <button type="button" id="btn-switch-to-create" class="link-subtle">
+              ¿Prefieres crear tu propia sala? Pulsa aquí
+            </button>
+          </div>
+        </div>
 
-        <div class="divider"><span>o únete a una existente</span></div>
+        <!-- Modo Estándar (cuando no hay enlace de invitación) -->
+        <div id="standard-actions-box">
+          <button id="btn-create-room" class="btn btn-primary btn-large" style="width: 100%;">
+            <span>✨ Crear Nueva Partida</span>
+          </button>
 
-        <div class="join-row">
-          <input type="text" id="input-room-code" placeholder="CÓDIGO (Ej: PELU-4821)" maxlength="10">
-          <button id="btn-join-room" class="btn btn-secondary">Unirse</button>
+          <div class="divider"><span>o únete a una existente</span></div>
+
+          <div class="join-row">
+            <input type="text" id="input-room-code" placeholder="CÓDIGO (Ej: PELU-4821)" maxlength="10">
+            <button id="btn-join-room" class="btn btn-secondary">Unirse</button>
+          </div>
         </div>
       </div>
     </div>
@@ -259,8 +283,8 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/pelusas-cards.js?v=2.9"></script>
-  <script src="/js/audio.js?v=2.9"></script>
-  <script src="/js/client.js?v=2.9"></script>
+  <script src="/js/pelusas-cards.js?v=3.0"></script>
+  <script src="/js/audio.js?v=3.0"></script>
+  <script src="/js/client.js?v=3.0"></script>
 </body>
 </html>

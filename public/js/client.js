@@ -5,11 +5,24 @@
 
 const socket = io();
 
-// Token persistente del jugador para que no pierda la partida al cambiar a WhatsApp
-let playerToken = localStorage.getItem('pelusa_player_token');
+// Token de jugador aislado por pestaña (sessionStorage) con respaldo para reconexión móvil
+const urlParams = new URLSearchParams(window.location.search);
+const roomParam = urlParams.get('room');
+
+let playerToken = sessionStorage.getItem('pelusa_player_token');
 if (!playerToken) {
-  playerToken = 'p_' + Math.random().toString(36).substring(2, 11);
-  localStorage.setItem('pelusa_player_token', playerToken);
+  if (roomParam) {
+    // Si entramos desde un link de invitación, generar un token único y fresco para esta pestaña
+    playerToken = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
+    sessionStorage.setItem('pelusa_player_token', playerToken);
+  } else {
+    playerToken = localStorage.getItem('pelusa_player_token');
+    if (!playerToken) {
+      playerToken = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem('pelusa_player_token', playerToken);
+    }
+    sessionStorage.setItem('pelusa_player_token', playerToken);
+  }
 }
 
 let myPlayerId = null;
@@ -33,6 +46,14 @@ const inputRoomCode = document.getElementById('input-room-code');
 const btnCreateRoom = document.getElementById('btn-create-room');
 const btnJoinRoom = document.getElementById('btn-join-room');
 const avatarSelector = document.getElementById('avatar-selector');
+
+// Modo Invitación
+const inviteBanner = document.getElementById('invite-banner');
+const inviteRoomCodeBadge = document.getElementById('invite-room-code-badge');
+const inviteActionsBox = document.getElementById('invite-actions-box');
+const standardActionsBox = document.getElementById('standard-actions-box');
+const btnQuickJoin = document.getElementById('btn-quick-join');
+const btnSwitchToCreate = document.getElementById('btn-switch-to-create');
 
 // Espera
 const lobbyWaitingArea = document.getElementById('lobby-waiting-area');
@@ -74,12 +95,52 @@ const reactionButtons = document.querySelectorAll('.reaction-btn');
 document.addEventListener('DOMContentLoaded', () => {
   buildAvatarSelector();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomParam = urlParams.get('room');
+  // Si se entra por un enlace de invitación con ?room=...
   if (roomParam) {
-    inputRoomCode.value = roomParam.toUpperCase();
+    const cleanRoom = roomParam.trim().toUpperCase();
+    inputRoomCode.value = cleanRoom;
+    if (inviteRoomCodeBadge) inviteRoomCodeBadge.innerText = cleanRoom;
+    if (inviteBanner) inviteBanner.style.display = 'flex';
+    if (inviteActionsBox) inviteActionsBox.style.display = 'block';
+    if (standardActionsBox) standardActionsBox.style.display = 'none';
+
+    // Limpiar salas previas en caché que no coincidan con este link de invitación
+    const previousSaved = sessionStorage.getItem('pelusa_active_room') || localStorage.getItem('pelusa_active_room');
+    if (previousSaved && previousSaved.toUpperCase() !== cleanRoom) {
+      sessionStorage.removeItem('pelusa_active_room');
+      localStorage.removeItem('pelusa_active_room');
+    }
+
+    inputPlayerName.placeholder = 'Tu nombre o apodo';
     inputPlayerName.focus();
   }
+
+  // Opción de cambiar a crear sala si el jugador lo desea
+  if (btnSwitchToCreate) {
+    btnSwitchToCreate.onclick = () => {
+      if (inviteBanner) inviteBanner.style.display = 'none';
+      if (inviteActionsBox) inviteActionsBox.style.display = 'none';
+      if (standardActionsBox) standardActionsBox.style.display = 'block';
+      window.history.replaceState({}, document.title, window.location.pathname);
+    };
+  }
+
+  // Enter en el campo de texto envía la acción primaria correspondiente
+  inputPlayerName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (inviteActionsBox && inviteActionsBox.style.display !== 'none') {
+        if (btnQuickJoin) btnQuickJoin.click();
+      } else {
+        if (btnCreateRoom) btnCreateRoom.click();
+      }
+    }
+  });
+
+  inputRoomCode.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (btnJoinRoom) btnJoinRoom.click();
+    }
+  });
 
   document.body.addEventListener('click', () => sounds.init(), { once: true });
 
@@ -111,9 +172,12 @@ socket.on('connect', () => {
   myPlayerId = socket.id;
   console.log('Conectado a Pelusas con ID:', myPlayerId);
 
-  // Intentar reconectar si se regresa de WhatsApp
-  const savedRoom = localStorage.getItem('pelusa_active_room');
-  if (savedRoom) {
+  // Intentar reconectar si se regresa de WhatsApp o se refresca la página
+  // Pero SOLO si no estamos en una pantalla con link de invitación a OTRA sala
+  const currentUrlParam = new URLSearchParams(window.location.search).get('room');
+  const savedRoom = sessionStorage.getItem('pelusa_active_room') || localStorage.getItem('pelusa_active_room');
+
+  if (savedRoom && (!currentUrlParam || currentUrlParam.toUpperCase() === savedRoom.toUpperCase())) {
     socket.emit('reconnect_session', { roomCode: savedRoom, playerToken });
   }
 });
@@ -121,28 +185,52 @@ socket.on('connect', () => {
 socket.on('reconnect_success', ({ state }) => {
   currentRoom = state;
   console.log('Reconexión exitosa a la sala:', state.code);
+  sessionStorage.setItem('pelusa_active_room', state.code);
+  localStorage.setItem('pelusa_active_room', state.code);
+
   if (state.status === 'playing') {
     renderGame(state);
   } else if (state.status === 'lobby') {
     showLobbyWaiting(state.code);
-    updateLobbyPlayers(state.players, state.hostId);
+    updateLobbyPlayers(state.players, state.hostId, state.hostToken);
   }
+});
+
+socket.on('reconnect_failed', () => {
+  sessionStorage.removeItem('pelusa_active_room');
+  localStorage.removeItem('pelusa_active_room');
+  document.getElementById('lobby-form-area').style.display = 'block';
+  lobbyWaitingArea.style.display = 'none';
 });
 
 socket.on('room_created', ({ roomCode, state }) => {
   currentRoom = state;
+  sessionStorage.setItem('pelusa_active_room', roomCode);
   localStorage.setItem('pelusa_active_room', roomCode);
   showLobbyWaiting(roomCode);
-  updateLobbyPlayers(state.players, state.hostId);
+  updateLobbyPlayers(state.players, state.hostId, state.hostToken);
+});
+
+socket.on('room_joined_success', ({ roomCode, state, playerToken: updatedToken }) => {
+  if (updatedToken) {
+    playerToken = updatedToken;
+    sessionStorage.setItem('pelusa_player_token', playerToken);
+  }
+  currentRoom = state;
+  sessionStorage.setItem('pelusa_active_room', roomCode);
+  localStorage.setItem('pelusa_active_room', roomCode);
+  showLobbyWaiting(roomCode);
+  updateLobbyPlayers(state.players, state.hostId, state.hostToken);
 });
 
 socket.on('room_state', (state) => {
   currentRoom = state;
+  sessionStorage.setItem('pelusa_active_room', state.code);
   localStorage.setItem('pelusa_active_room', state.code);
 
   if (state.status === 'lobby') {
     showLobbyWaiting(state.code);
-    updateLobbyPlayers(state.players, state.hostId);
+    updateLobbyPlayers(state.players, state.hostId, state.hostToken);
   } else if (state.status === 'playing') {
     renderGame(state);
   } else if (state.status === 'gameover') {
@@ -158,7 +246,7 @@ socket.on('game_started', (state) => {
 
 socket.on('player_joined', (state) => {
   if (state && state.players) {
-    updateLobbyPlayers(state.players, state.hostId);
+    updateLobbyPlayers(state.players, state.hostId, state.hostToken);
   }
 });
 
@@ -185,22 +273,60 @@ socket.on('player_reaction', ({ playerId, emoji }) => {
 
 socket.on('error_msg', ({ message }) => {
   alert(message);
+  if (btnQuickJoin) {
+    btnQuickJoin.disabled = false;
+    btnQuickJoin.innerHTML = '<span>🚀 ¡Unirme a la Partida de Pelusas!</span>';
+  }
+  if (btnJoinRoom) {
+    btnJoinRoom.disabled = false;
+  }
+  if (btnCreateRoom) {
+    btnCreateRoom.disabled = false;
+    btnCreateRoom.innerHTML = '<span>✨ Crear Nueva Partida</span>';
+  }
 });
 
 // --- Acciones de Lobby ---
-btnCreateRoom.onclick = () => {
-  const name = inputPlayerName.value.trim() || 'Jugador 1';
-  socket.emit('create_room', { playerName: name, avatar: selectedAvatar, playerToken });
-};
-
-btnJoinRoom.onclick = () => {
-  const name = inputPlayerName.value.trim() || 'Jugador 2';
-  const code = inputRoomCode.value.trim().toUpperCase();
-  if (!code) {
+function executeJoin(code) {
+  const cleanCode = (code || '').trim().toUpperCase();
+  if (!cleanCode) {
     alert('Ingresa el código de la sala');
     return;
   }
-  socket.emit('join_room', { roomCode: code, playerName: name, avatar: selectedAvatar, playerToken });
+  const name = inputPlayerName.value.trim() || 'Jugador ' + Math.floor(Math.random() * 90 + 10);
+
+  if (btnQuickJoin) {
+    btnQuickJoin.disabled = true;
+    btnQuickJoin.innerText = '⏳ Entrando a la sala...';
+  }
+  if (btnJoinRoom) {
+    btnJoinRoom.disabled = true;
+  }
+
+  socket.emit('join_room', {
+    roomCode: cleanCode,
+    playerName: name,
+    avatar: selectedAvatar,
+    playerToken
+  });
+}
+
+btnCreateRoom.onclick = () => {
+  const name = inputPlayerName.value.trim() || 'Jugador 1';
+  btnCreateRoom.disabled = true;
+  btnCreateRoom.innerText = '⏳ Creando sala...';
+  socket.emit('create_room', { playerName: name, avatar: selectedAvatar, playerToken });
+};
+
+if (btnQuickJoin) {
+  btnQuickJoin.onclick = () => {
+    const code = inputRoomCode.value || roomParam;
+    executeJoin(code);
+  };
+}
+
+btnJoinRoom.onclick = () => {
+  executeJoin(inputRoomCode.value);
 };
 
 function showLobbyWaiting(code) {
@@ -221,10 +347,15 @@ function showLobbyWaiting(code) {
   };
 }
 
-function updateLobbyPlayers(players, hostId) {
+function updateLobbyPlayers(players, hostId, hostToken) {
   lobbyPlayersList.innerHTML = '';
+  const playerCountEl = document.getElementById('player-count');
+  if (playerCountEl) {
+    playerCountEl.innerText = players.length;
+  }
+
   players.forEach(p => {
-    const isHost = p.id === hostId || p.token === hostId;
+    const isHost = p.id === hostId || (hostToken && p.token === hostToken);
     const isMe = p.id === myPlayerId || p.token === playerToken;
     const item = document.createElement('div');
     item.className = 'lobby-player-card';
@@ -238,7 +369,7 @@ function updateLobbyPlayers(players, hostId) {
     lobbyPlayersList.appendChild(item);
   });
 
-  const isMeHost = hostId === myPlayerId || hostId === playerToken;
+  const isMeHost = hostId === myPlayerId || (hostToken && playerToken === hostToken);
   btnStartGame.style.display = isMeHost ? 'block' : 'none';
   btnStartGame.disabled = players.length < 2;
 
@@ -747,6 +878,7 @@ function renderGameOver(state) {
   });
 
   document.getElementById('btn-play-again').onclick = () => {
+    sessionStorage.removeItem('pelusa_active_room');
     localStorage.removeItem('pelusa_active_room');
     window.location.reload();
   };
@@ -871,6 +1003,7 @@ socket.on('player_left_friendly', ({ playerName, message }) => {
 });
 
 socket.on('left_game_success', () => {
+  sessionStorage.removeItem('pelusa_active_room');
   localStorage.removeItem('pelusa_active_room');
   screenGame.style.display = 'none';
   screenGameOver.style.display = 'none';
