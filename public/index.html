@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=2.8">
+  <link rel="stylesheet" href="/css/style.css?v=2.9">
 </head>
 <body>
   <!-- Fondos dinámicos luminosos -->
@@ -75,6 +75,31 @@
         </div>
       </div>
 
+      <!-- Selector de duración / tamaño del montón de cartas -->
+      <div class="deck-config-section">
+        <div class="config-label-row">
+          <span class="config-title">🃏 Duración de la partida:</span>
+          <span id="deck-config-hint" class="config-host-hint">Configura el anfitrión</span>
+        </div>
+        <div class="deck-preset-grid" id="deck-preset-selector">
+          <button type="button" class="preset-btn" data-size="50">
+            <span class="preset-name">⚡ Rápida</span>
+            <span class="preset-count">50 cartas</span>
+            <span class="preset-time">~5-8 min</span>
+          </button>
+          <button type="button" class="preset-btn" data-size="75">
+            <span class="preset-name">⏱️ Media</span>
+            <span class="preset-count">75 cartas</span>
+            <span class="preset-time">~10-15 min</span>
+          </button>
+          <button type="button" class="preset-btn active" data-size="110">
+            <span class="preset-name">🏆 Completa</span>
+            <span class="preset-count">110 cartas</span>
+            <span class="preset-time">Original</span>
+          </button>
+        </div>
+      </div>
+
       <div class="start-action-row">
         <button id="btn-start-game" class="btn btn-accent btn-large" style="display: none;">
           ¡Iniciar Partida!
@@ -96,8 +121,12 @@
       </div>
       <div class="topbar-right">
         <button id="btn-sound-toggle" class="icon-btn" title="Silenciar / Activar Sonido">🔊</button>
+        <button id="btn-leave-game" class="icon-btn btn-leave-game" title="Salir o terminar partida">🚪</button>
       </div>
     </header>
+
+    <!-- Banner flotante de avisos amables (ej: retirada de jugadores) -->
+    <div id="game-toast-banner" class="game-toast-banner" style="display: none;"></div>
 
     <!-- Zona de Rivales -->
     <section class="opponents-strip">
@@ -213,10 +242,25 @@
     </div>
   </div>
 
+  <!-- Modal para retirarse o terminar partida amablemente -->
+  <div id="modal-leave-game" class="modal-overlay" style="display: none;">
+    <div class="card-glass leave-modal-card">
+      <div class="leave-icon" id="leave-modal-icon">👋</div>
+      <h2 id="leave-modal-title">¿Deseas salir de la partida?</h2>
+      <p id="leave-modal-desc" class="leave-modal-desc">
+        Se notificará a los demás jugadores cordialmente. Tus cartas expuestas volverán al montón de polvo.
+      </p>
+
+      <div class="leave-actions-container" id="leave-actions-box">
+        <!-- Rellenado dinámicamente según sea Anfitrión o Invitado -->
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/pelusas-cards.js?v=2.8"></script>
-  <script src="/js/audio.js?v=2.8"></script>
-  <script src="/js/client.js?v=2.8"></script>
+  <script src="/js/pelusas-cards.js?v=2.9"></script>
+  <script src="/js/audio.js?v=2.9"></script>
+  <script src="/js/client.js?v=2.9"></script>
 </body>
 </html>

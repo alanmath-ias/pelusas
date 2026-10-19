@@ -197,6 +197,59 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Configurar tamaño del mazo en el lobby (solo anfitrión)
+  socket.on('set_deck_size', ({ deckSize }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const res = room.setDeckSize(deckSize, socket.id);
+    if (!res.success) {
+      return socket.emit('error_msg', { message: res.error });
+    }
+
+    broadcastRoom(room, 'deck_size_updated', { deckSize: room.deckSize });
+  });
+
+  // Retirarse amablemente de la partida
+  socket.on('leave_game', ({ message }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const res = room.leaveGame(socket.id, message);
+    socket.leave(currentRoomCode);
+    socket.emit('left_game_success');
+
+    if (res.roomEmpty) {
+      rooms.delete(currentRoomCode);
+      return;
+    }
+
+    if (res.gameEnded) {
+      broadcastRoom(room, 'gameover', res);
+    } else {
+      broadcastRoom(room, 'player_left_friendly', {
+        playerName: res.playerName,
+        message: res.message
+      });
+    }
+  });
+
+  // Finalizar partida por decisión del anfitrión
+  socket.on('host_end_game', () => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const res = room.endGameByHost(socket.id);
+    if (!res.success) {
+      return socket.emit('error_msg', { message: res.error });
+    }
+
+    broadcastRoom(room, 'gameover', res);
+  });
+
   // Desconexión temporal (ej: al pasar a WhatsApp)
   socket.on('disconnect', () => {
     if (currentRoomCode) {

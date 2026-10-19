@@ -52,6 +52,13 @@ const turnStatusBadge = document.getElementById('turn-status-badge');
 const uniqueCounterText = document.getElementById('unique-counter-text');
 const riskWarning = document.getElementById('risk-warning');
 const btnSoundToggle = document.getElementById('btn-sound-toggle');
+const btnLeaveGame = document.getElementById('btn-leave-game');
+const modalLeaveGame = document.getElementById('modal-leave-game');
+const leaveModalTitle = document.getElementById('leave-modal-title');
+const leaveModalDesc = document.getElementById('leave-modal-desc');
+const leaveActionsBox = document.getElementById('leave-actions-box');
+const gameToastBanner = document.getElementById('game-toast-banner');
+const deckConfigHint = document.getElementById('deck-config-hint');
 
 // Acciones del jugador
 const btnDrawCard = document.getElementById('btn-draw-card');
@@ -242,6 +249,8 @@ function updateLobbyPlayers(players, hostId) {
     btnStartGame.innerText = `🚀 ¡Iniciar Partida (${players.length} jugadores)!`;
     btnStartGame.classList.add('btn-ready-pulse');
   }
+
+  updateDeckPresetButtons(currentRoom?.deckSize || 110, isMeHost);
 }
 
 btnStartGame.onclick = () => {
@@ -257,7 +266,7 @@ function renderGame(state) {
   screenGame.style.display = 'flex';
 
   gameRoomCode.innerText = state.code;
-  deckCounter.innerText = `${state.deckCount} / 110`;
+  deckCounter.innerText = `${state.deckCount} / ${state.initialDeckCount || state.deckSize || 110}`;
 
   const activePlayer = state.players[state.currentTurnIndex];
   const isMyTurn = state.isMyTurn;
@@ -749,3 +758,129 @@ function escapeHtml(text) {
   div.innerText = text;
   return div.innerHTML;
 }
+
+// --- Control del tamaño del mazo (duración) en el Lobby ---
+function updateDeckPresetButtons(deckSize, isHost) {
+  const buttons = document.querySelectorAll('.preset-btn');
+  buttons.forEach(btn => {
+    const size = Number(btn.getAttribute('data-size'));
+    if (size === deckSize) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+    btn.disabled = !isHost;
+  });
+  if (deckConfigHint) {
+    deckConfigHint.innerText = isHost ? 'Configura antes de iniciar' : 'Elegido por el anfitrión';
+  }
+}
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.onclick = () => {
+    if (!currentRoom || !currentRoom.isHost) return;
+    const deckSize = Number(btn.getAttribute('data-size'));
+    socket.emit('set_deck_size', { deckSize });
+  };
+});
+
+// --- Modal de Salir / Finalizar Partida Amablemente ---
+if (btnLeaveGame) {
+  btnLeaveGame.onclick = () => {
+    openLeaveModal();
+  };
+}
+
+function openLeaveModal() {
+  if (!modalLeaveGame) return;
+  const isHost = currentRoom && currentRoom.isHost;
+
+  leaveActionsBox.innerHTML = '';
+
+  if (isHost) {
+    leaveModalTitle.innerText = '👑 Opciones de la Partida';
+    leaveModalDesc.innerText = 'Como anfitrión puedes finalizar la partida ahora mismo para ver el podio con las puntuaciones actuales, o retirarte cordialmente de la sala.';
+
+    // Botón: Finalizar partida y ver podio
+    const btnEnd = document.createElement('button');
+    btnEnd.className = 'btn btn-primary';
+    btnEnd.innerHTML = '🏁 Finalizar Partida y Ver Podio';
+    btnEnd.onclick = () => {
+      modalLeaveGame.style.display = 'none';
+      socket.emit('host_end_game');
+    };
+    leaveActionsBox.appendChild(btnEnd);
+
+    // Botón: Retirarme amablemente
+    const btnLeave = document.createElement('button');
+    btnLeave.className = 'btn btn-danger';
+    btnLeave.innerHTML = '👋 Salir de la Sala ("Lo siento, me tengo que ir")';
+    btnLeave.onclick = () => {
+      modalLeaveGame.style.display = 'none';
+      socket.emit('leave_game', { message: 'Lo siento, tengo que irme' });
+    };
+    leaveActionsBox.appendChild(btnLeave);
+
+    // Botón: Cancelar
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn btn-secondary';
+    btnCancel.innerText = 'Continuar Jugando';
+    btnCancel.onclick = () => {
+      modalLeaveGame.style.display = 'none';
+    };
+    leaveActionsBox.appendChild(btnCancel);
+  } else {
+    leaveModalTitle.innerText = '👋 ¿Deseas retirarte de la partida?';
+    leaveModalDesc.innerText = 'Se avisará cordialmente a los demás jugadores: "Lo siento, tengo que irme. ¡Gracias por la partida!". Tus cartas expuestas volverán al montón de polvo.';
+
+    // Botón: Retirarme amablemente
+    const btnLeave = document.createElement('button');
+    btnLeave.className = 'btn btn-danger';
+    btnLeave.innerHTML = '👋 Sí, retirarme ("Lo siento, tengo que irme")';
+    btnLeave.onclick = () => {
+      modalLeaveGame.style.display = 'none';
+      socket.emit('leave_game', { message: 'Lo siento, tengo que irme' });
+    };
+    leaveActionsBox.appendChild(btnLeave);
+
+    // Botón: Cancelar
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn btn-secondary';
+    btnCancel.innerText = 'Seguir Jugando';
+    btnCancel.onclick = () => {
+      modalLeaveGame.style.display = 'none';
+    };
+    leaveActionsBox.appendChild(btnCancel);
+  }
+
+  modalLeaveGame.style.display = 'flex';
+}
+
+function showToastBanner(msg) {
+  if (!gameToastBanner) return;
+  gameToastBanner.innerHTML = msg;
+  gameToastBanner.style.display = 'flex';
+  setTimeout(() => {
+    gameToastBanner.style.display = 'none';
+  }, 4200);
+}
+
+socket.on('player_left_friendly', ({ playerName, message }) => {
+  sounds.playDraw();
+  showToastBanner(`👋 <strong>${escapeHtml(playerName)}</strong>: "${escapeHtml(message || 'Lo siento, tengo que irme')}"`);
+});
+
+socket.on('left_game_success', () => {
+  localStorage.removeItem('pelusa_active_room');
+  screenGame.style.display = 'none';
+  screenGameOver.style.display = 'none';
+  screenLobby.style.display = 'flex';
+  document.getElementById('lobby-form-area').style.display = 'block';
+  lobbyWaitingArea.style.display = 'none';
+  if (modalLeaveGame) modalLeaveGame.style.display = 'none';
+});
+
+socket.on('deck_size_updated', ({ deckSize }) => {
+  const isHost = currentRoom && currentRoom.isHost;
+  updateDeckPresetButtons(deckSize, isHost);
+});
