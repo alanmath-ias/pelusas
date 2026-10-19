@@ -147,6 +147,14 @@ io.on('connection', (socket) => {
       busted: res.busted,
       gameEnded: res.gameEnded
     });
+
+    // Si se pasó (busted), esperar 1.5s para ver el efecto y avanzar el turno notificando a todos
+    if (res.busted) {
+      setTimeout(() => {
+        room.advanceTurn();
+        broadcastRoom(room, 'turn_changed');
+      }, 1500);
+    }
   });
 
   // Robar cartas a otro jugador (acción manual tocando la carta del rival)

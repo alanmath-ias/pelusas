@@ -256,7 +256,10 @@ function renderGame(state) {
   const activePlayer = state.players[state.currentTurnIndex];
   const isMyTurn = state.isMyTurn;
 
-  if (isMyTurn) {
+  if (state.turnState.isBusted) {
+    turnStatusBadge.className = 'turn-badge turn-busted';
+    turnStatusBadge.innerHTML = '💨 ¡CORRIENTE DE AIRE! Pasando turno...';
+  } else if (isMyTurn) {
     turnStatusBadge.className = 'turn-badge my-turn';
     turnStatusBadge.innerHTML = '⭐ ¡ES TU TURNO! Elige tu jugada';
   } else {

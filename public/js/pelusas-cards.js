@@ -234,21 +234,22 @@ function renderPelusaCard(value, options = {}) {
     ? `<div class="card-count-badge">x${options.badge}</div>` 
     : '';
 
-  let widthPx = 76;
-  if (sizeClass === 'tiny') widthPx = 34;
-  else if (sizeClass === 'avatar') widthPx = 52;
-  else if (sizeClass === 'mini') widthPx = 44;
-  else if (sizeClass === 'medium') widthPx = 68;
-  else if (sizeClass === 'large') widthPx = 100;
+  let widthPx = 72;
+  let numFontSize = '20px';
+  if (sizeClass === 'tiny') { widthPx = 28; numFontSize = '11px'; }
+  else if (sizeClass === 'avatar') { widthPx = 34; numFontSize = '13px'; }
+  else if (sizeClass === 'mini') { widthPx = 38; numFontSize = '14px'; }
+  else if (sizeClass === 'medium') { widthPx = 64; numFontSize = '18px'; }
+  else if (sizeClass === 'large') { widthPx = 95; numFontSize = '24px'; }
 
   return `
     <div class="pelusa-card-wrapper card-val-${value} ${sizeClass} ${isClickable ? 'clickable' : ''}" 
          data-value="${value}" 
          ${extraAttrs}
-         style="width: ${widthPx}px; aspect-ratio: 100/145; background: ${data.bg}; border: 2px solid #ffffff; border-radius: 9px; box-shadow: 0 4px 10px rgba(0,0,0,0.35); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: ${isClickable ? 'pointer' : 'default'};">
+         style="width: ${widthPx}px; aspect-ratio: 100/145; background: ${data.bg}; border: 1.5px solid #ffffff; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.35); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: ${isClickable ? 'pointer' : 'default'};">
       
       <!-- Número grande de pegatina en la parte superior -->
-      <div class="card-num-sticker" style="position: absolute; top: 3px; left: 0; right: 0; text-align: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: ${sizeClass === 'tiny' || sizeClass === 'mini' ? '14px' : '22px'}; line-height: 1; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 2px #000;">
+      <div class="card-num-sticker" style="position: absolute; top: 2px; left: 0; right: 0; text-align: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: ${numFontSize}; line-height: 1; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 2px #000;">
         ${value}
       </div>
 
