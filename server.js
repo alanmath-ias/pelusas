@@ -12,7 +12,6 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Desactivar caché estático para asegurar que CSS y JS siempre se actualicen de inmediato
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   maxAge: 0,
@@ -25,7 +24,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Pelusas - Juegos AlanMath', timestamp: new Date() });
 });
 
-// Almacén en memoria de salas
 const rooms = new Map();
 
 function generateRoomCode() {
@@ -37,14 +35,12 @@ function generateRoomCode() {
   return code;
 }
 
-// Emite el estado a todos los jugadores de la sala
 function broadcastRoom(room, eventName = 'room_state', extraData = null) {
   room.players.forEach(p => {
     const socket = io.sockets.sockets.get(p.id);
     if (socket) {
       const state = room.getStateFor(p.id);
       if (extraData) state.extra = extraData;
-      // Emitir siempre room_state para que la interfaz se sincronice
       socket.emit('room_state', state);
       if (eventName !== 'room_state') {
         socket.emit(eventName, { ...state, ...extraData });
@@ -55,17 +51,35 @@ function broadcastRoom(room, eventName = 'room_state', extraData = null) {
 
 io.on('connection', (socket) => {
   let currentRoomCode = null;
+  let currentPlayerToken = null;
+
+  // Reconexión tras volver de WhatsApp o refrescar la página
+  socket.on('reconnect_session', ({ roomCode, playerToken }) => {
+    if (!roomCode || !playerToken) return;
+    const room = rooms.get(roomCode.trim().toUpperCase());
+    if (!room) return;
+
+    const player = room.reconnectPlayer(socket.id, playerToken);
+    if (player) {
+      currentRoomCode = room.code;
+      currentPlayerToken = playerToken;
+      socket.join(room.code);
+      socket.emit('reconnect_success', { state: room.getStateFor(socket.id) });
+      broadcastRoom(room);
+    }
+  });
 
   // Crear sala
-  socket.on('create_room', ({ playerName, avatar }) => {
+  socket.on('create_room', ({ playerName, avatar, playerToken }) => {
     let code = generateRoomCode();
     while (rooms.has(code)) {
       code = generateRoomCode();
     }
 
-    const room = new PelusasRoom(code, socket.id, playerName, avatar);
+    const room = new PelusasRoom(code, socket.id, playerName, avatar, playerToken);
     rooms.set(code, room);
     currentRoomCode = code;
+    currentPlayerToken = playerToken;
     socket.join(code);
 
     socket.emit('room_created', { roomCode: code, state: room.getStateFor(socket.id) });
@@ -73,7 +87,7 @@ io.on('connection', (socket) => {
   });
 
   // Unirse a sala
-  socket.on('join_room', ({ roomCode, playerName, avatar }) => {
+  socket.on('join_room', ({ roomCode, playerName, avatar, playerToken }) => {
     const code = (roomCode || '').trim().toUpperCase();
     const room = rooms.get(code);
 
@@ -81,12 +95,24 @@ io.on('connection', (socket) => {
       return socket.emit('error_msg', { message: 'No se encontró la sala especificada' });
     }
 
-    const res = room.addPlayer(socket.id, playerName, avatar);
+    // Verificar si es una reconexión
+    const existingPlayer = room.players.find(p => p.token === playerToken);
+    if (existingPlayer) {
+      room.reconnectPlayer(socket.id, playerToken);
+      currentRoomCode = code;
+      currentPlayerToken = playerToken;
+      socket.join(code);
+      socket.emit('reconnect_success', { state: room.getStateFor(socket.id) });
+      return broadcastRoom(room);
+    }
+
+    const res = room.addPlayer(socket.id, playerName, avatar, playerToken);
     if (!res.success) {
       return socket.emit('error_msg', { message: res.error });
     }
 
     currentRoomCode = code;
+    currentPlayerToken = playerToken;
     socket.join(code);
     broadcastRoom(room, 'player_joined', { player: res.player });
   });
@@ -119,12 +145,11 @@ io.on('connection', (socket) => {
     broadcastRoom(room, 'card_drawn', {
       card: res.card,
       busted: res.busted,
-      steals: res.steals,
       gameEnded: res.gameEnded
     });
   });
 
-  // Robar cartas a otro jugador
+  // Robar cartas a otro jugador (acción manual tocando la carta del rival)
   socket.on('steal_cards', ({ targetId, value }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
@@ -152,7 +177,7 @@ io.on('connection', (socket) => {
     broadcastRoom(room, 'turn_stopped');
   });
 
-  // Reacciones en vivo (emojis animados en la mesa)
+  // Reacciones en vivo
   socket.on('send_reaction', ({ emoji }) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
@@ -164,17 +189,13 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Desconexión
+  // Desconexión temporal (ej: al pasar a WhatsApp)
   socket.on('disconnect', () => {
     if (currentRoomCode) {
       const room = rooms.get(currentRoomCode);
       if (room) {
-        room.removePlayer(socket.id);
-        if (room.players.every(p => !p.connected)) {
-          rooms.delete(currentRoomCode);
-        } else {
-          broadcastRoom(room);
-        }
+        room.markDisconnected(socket.id);
+        broadcastRoom(room);
       }
     }
   });

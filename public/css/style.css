@@ -1,11 +1,10 @@
 /* ==========================================================================
-   PELUSAS - ESTILOS VISUALES & ANIMACIONES DE JUEGO
+   PELUSAS - ESTILOS VISUALES & ANIMACIONES DE JUEGO (RESPONSIVE VIEWPORT-FIT)
    ========================================================================== */
 
 :root {
   --bg-color: #0b0f19;
   --bg-surface: rgba(18, 24, 38, 0.75);
-  --bg-glass: rgba(255, 255, 255, 0.05);
   --border-glass: rgba(255, 255, 255, 0.12);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -17,7 +16,6 @@
   --accent-amber: #f59e0b;
   --accent-red: #ef4444;
   --whatsapp-color: #25d366;
-  --card-radius: 12px;
 }
 
 * {
@@ -31,103 +29,85 @@ body {
   font-family: 'Inter', -apple-system, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-main);
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
   user-select: none;
 }
 
-/* Luces ambientales de fondo */
+/* Luces ambientales tenues */
 .bg-glow {
   position: fixed;
   border-radius: 50%;
   filter: blur(140px);
   z-index: 0;
-  opacity: 0.28;
+  opacity: 0.22;
   pointer-events: none;
 }
 
-.bg-glow-1 {
-  width: 500px;
-  height: 500px;
-  background: #3b82f6;
-  top: -150px;
-  left: -150px;
-}
-
-.bg-glow-2 {
-  width: 450px;
-  height: 450px;
-  background: #ec4899;
-  bottom: -150px;
-  right: -150px;
-}
-
-.bg-glow-3 {
-  width: 400px;
-  height: 400px;
-  background: #8b5cf6;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
+.bg-glow-1 { width: 450px; height: 450px; background: #3b82f6; top: -100px; left: -100px; }
+.bg-glow-2 { width: 400px; height: 400px; background: #ec4899; bottom: -100px; right: -100px; }
+.bg-glow-3 { width: 350px; height: 350px; background: #8b5cf6; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
 .screen-container {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 1rem;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 /* ==========================================================================
-   ESTILOS DE LOBBY
+   PANTALLA DE LOBBY (SCROLLABLE SI ES NECESARIO EN PANTALLAS CHICAS)
    ========================================================================== */
 
 #screen-lobby {
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
 }
 
 .lobby-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2rem;
 }
 
 .brand-badge {
   display: inline-block;
-  padding: 0.35rem 1rem;
+  padding: 0.3rem 0.9rem;
   background: rgba(139, 92, 246, 0.15);
   border: 1px solid rgba(139, 92, 246, 0.4);
   color: #c4b5fd;
   font-family: 'Outfit', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.15em;
   border-radius: 9999px;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem;
 }
 
 .game-title {
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(2.8rem, 8vw, 4.2rem);
+  font-size: clamp(2.4rem, 6vw, 3.8rem);
   font-weight: 900;
   background: linear-gradient(135deg, #ffffff 20%, #a5b4fc 60%, #f472b6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1.1;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.3rem;
 }
 
 .game-tagline {
   color: var(--text-muted);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   max-width: 450px;
   margin: 0 auto;
 }
@@ -137,37 +117,37 @@ body {
   border: 1px solid var(--border-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 24px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
 }
 
 .lobby-box {
   width: 100%;
-  max-width: 540px;
-  padding: 2rem 1.8rem;
+  max-width: 500px;
+  padding: 1.6rem;
 }
 
 .form-group {
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.1rem;
 }
 
 .form-group label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #cbd5e1;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 input[type="text"] {
   width: 100%;
-  padding: 0.85rem 1.2rem;
+  padding: 0.75rem 1rem;
   background: rgba(15, 23, 42, 0.8);
   border: 1.5px solid rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
+  border-radius: 12px;
   color: #fff;
   font-family: 'Inter', sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
   transition: all 0.2s ease;
 }
@@ -177,43 +157,43 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
 }
 
-/* Selector de Avatares */
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .avatar-option {
   aspect-ratio: 100 / 145;
-  border-radius: 10px;
+  border-radius: 9px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .avatar-option:hover {
-  transform: translateY(-4px) scale(1.05);
+  transform: translateY(-3px) scale(1.05);
 }
 
 .avatar-option.selected {
   border-color: #38bdf8;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
   transform: scale(1.08);
 }
 
-/* Botones principales */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.4rem;
+  padding: 0.75rem 1.2rem;
   font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  border-radius: 14px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -228,19 +208,14 @@ input[type="text"]:focus {
 
 .btn-large {
   width: 100%;
-  padding: 1.1rem;
-  font-size: 1.15rem;
+  padding: 0.95rem;
+  font-size: 1.05rem;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #8b5cf6, #6366f1);
   color: #ffffff;
-  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
 }
 
 .btn-secondary {
@@ -249,20 +224,10 @@ input[type="text"]:focus {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.18);
-}
-
 .btn-whatsapp {
   background: linear-gradient(135deg, #25d366, #128c7e);
   color: #ffffff;
-  font-weight: 700;
   box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
-}
-
-.btn-whatsapp:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 25px rgba(37, 211, 102, 0.5);
 }
 
 .btn-copy {
@@ -274,7 +239,7 @@ input[type="text"]:focus {
 .btn-accent {
   background: linear-gradient(135deg, #10b981, #059669);
   color: #ffffff;
-  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
 }
 
 .btn-ready-pulse {
@@ -291,9 +256,9 @@ input[type="text"]:focus {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 1.4rem 0;
+  margin: 1.1rem 0;
   color: var(--text-dim);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .divider::before, .divider::after {
@@ -302,155 +267,71 @@ input[type="text"]:focus {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.divider span {
-  padding: 0 0.8rem;
-}
+.divider span { padding: 0 0.6rem; }
 
-.join-row {
-  display: flex;
-  gap: 0.6rem;
-}
+.join-row { display: flex; gap: 0.5rem; }
+.join-row input { flex: 1; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
 
-.join-row input {
-  flex: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-}
-
-/* Sala de Espera */
-.waiting-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.code-title {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-}
-
-.room-code-display {
-  font-family: 'Outfit', sans-serif;
-  font-size: 2.8rem;
-  font-weight: 900;
-  color: #38bdf8;
-  letter-spacing: 0.1em;
-  text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
-}
-
-.share-hint {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-top: 0.4rem;
-}
-
-.share-buttons-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  margin-bottom: 1.8rem;
-}
-
-.lobby-players-section h3 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
-  color: #cbd5e1;
-  margin-bottom: 0.8rem;
-}
-
-.lobby-players-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-bottom: 1.8rem;
-}
-
-.lobby-player-card {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.6rem 1rem;
-  border-radius: 14px;
-}
-
-.player-avatar-mini {
-  width: 38px;
-  height: 52px;
-}
-
-.player-info {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex: 1;
-}
-
-.player-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.badge-host {
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: rgba(234, 179, 8, 0.15);
-  border: 1px solid rgba(234, 179, 8, 0.4);
-  color: #fde047;
-  padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
-}
+.waiting-header { text-align: center; margin-bottom: 1.2rem; }
+.code-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 0.2rem; }
+.room-code-display { font-family: 'Outfit', sans-serif; font-size: 2.4rem; font-weight: 900; color: #38bdf8; letter-spacing: 0.1em; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+.share-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem; }
+.share-buttons-row { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.4rem; }
+.lobby-players-section h3 { font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: #cbd5e1; margin-bottom: 0.6rem; }
+.lobby-players-grid { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.4rem; max-height: 180px; overflow-y: auto; }
+.lobby-player-card { display: flex; align-items: center; gap: 0.7rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 0.5rem 0.8rem; border-radius: 12px; }
+.player-avatar-mini { width: 34px; height: 48px; flex-shrink: 0; }
+.player-info { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+.player-name { font-weight: 600; font-size: 0.9rem; }
+.badge-host { font-size: 0.7rem; font-weight: 700; background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.4); color: #fde047; padding: 0.15rem 0.5rem; border-radius: 9999px; }
 
 /* ==========================================================================
-   PANTALLA DE JUEGO MULTIJUGADOR
+   PANTALLA DE JUEGO MULTIJUGADOR (100VH FIT TOTAL)
    ========================================================================== */
 
 #screen-game {
-  padding-bottom: 5.5rem;
+  padding: 0.5rem 0.8rem 4rem 0.8rem;
+  justify-content: space-between;
 }
 
+/* Barra superior compacta */
 .game-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 1rem;
-  background: rgba(18, 24, 38, 0.65);
+  padding: 0.4rem 0.8rem;
+  background: rgba(18, 24, 38, 0.75);
   border: 1px solid var(--border-glass);
   backdrop-filter: blur(16px);
-  border-radius: 18px;
-  margin-bottom: 0.8rem;
+  border-radius: 14px;
+  height: 44px;
+  flex-shrink: 0;
+  margin-bottom: 0.4rem;
 }
 
 .game-logo-badge {
   font-family: 'Outfit', sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 900;
   color: #f472b6;
-  margin-right: 0.6rem;
+  margin-right: 0.5rem;
 }
 
 .room-pill {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
 }
 
-.room-pill strong {
-  color: #38bdf8;
-}
+.room-pill strong { color: #38bdf8; }
 
 .turn-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.45rem 1.2rem;
+  padding: 0.3rem 0.9rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 9999px;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #cbd5e1;
 }
@@ -459,68 +340,65 @@ input[type="text"]:focus {
   background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(249, 115, 22, 0.25));
   border-color: #f59e0b;
   color: #fef08a;
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
   animation: pulse-turn 1.8s infinite ease-in-out;
-}
-
-@keyframes pulse-turn {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
 }
 
 .icon-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
-  border-radius: 10px;
-  width: 36px;
-  height: 36px;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.9rem;
 }
 
-/* Tira de Rivales */
+/* Tira de Rivales (Horizontal compacta) */
 .opponents-strip {
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.4rem;
   overflow-x: auto;
-  padding-bottom: 0.4rem;
+  flex-shrink: 0;
+  padding-bottom: 2px;
 }
 
 .opponents-grid {
   display: flex;
-  gap: 0.8rem;
+  gap: 0.6rem;
 }
 
 .opponent-box {
   flex: 1;
-  min-width: 200px;
-  max-width: 280px;
-  background: rgba(18, 24, 38, 0.55);
+  min-width: 170px;
+  max-width: 250px;
+  background: rgba(18, 24, 38, 0.65);
   border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 0.75rem;
+  border-radius: 12px;
+  padding: 0.45rem 0.6rem;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .opponent-box.active-turn {
   border-color: #f59e0b;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
   background: rgba(245, 158, 11, 0.06);
 }
 
 .opponent-header {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
 }
 
 .opp-avatar {
-  width: 40px;
-  height: 56px;
+  width: 30px;
+  height: 42px;
   flex-shrink: 0;
 }
 
@@ -531,40 +409,63 @@ input[type="text"]:focus {
 
 .opp-name {
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .playing-indicator {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: #facc15;
-  margin-left: 0.3rem;
+  margin-left: 0.2rem;
 }
 
 .opp-score {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: #6ee7b7;
   font-weight: 600;
 }
 
 .opp-exposed-section .section-title {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-dim);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
 }
 
 .opp-exposed-cards {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.3rem;
   overflow-x: auto;
-  min-height: 52px;
   align-items: center;
+  min-height: 48px;
+}
+
+/* Efecto de carta robable tocable */
+.stealable-card-target {
+  display: inline-block;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+.stealable-card-target.can-steal-touch {
+  animation: pulse-steal-touch 1.2s infinite ease-in-out;
+  cursor: pointer;
+}
+
+@keyframes pulse-steal-touch {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 18px rgba(234, 88, 12, 1);
+  }
 }
 
 .no-cards-note {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #475569;
   font-style: italic;
 }
@@ -572,20 +473,20 @@ input[type="text"]:focus {
 /* Mesa Central */
 .game-table {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1.2rem;
-  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+  justify-content: space-evenly;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.75) 100%);
   border: 1.5px solid var(--border-glass);
-  border-radius: 24px;
-  padding: 1.5rem 1rem;
-  margin-bottom: 1rem;
+  border-radius: 20px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.4rem;
   position: relative;
 }
 
-/* Montón de Polvo (Mazo) */
+/* Montón de polvo (Mazo) */
 .deck-zone {
   display: flex;
   justify-content: center;
@@ -593,68 +494,51 @@ input[type="text"]:focus {
 
 .deck-pile {
   position: relative;
-  width: 110px;
-  height: 155px;
+  width: 78px;
+  height: 108px;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.deck-pile:hover {
-  transform: translateY(-5px) scale(1.04);
-}
+.deck-pile:hover { transform: translateY(-4px) scale(1.05); }
 
 .deck-inner {
   position: absolute;
   inset: 0;
   z-index: 3;
   background: linear-gradient(135deg, #1e293b, #0f172a);
-  border: 3px solid #cbd5e1;
-  border-radius: 12px;
+  border: 2.5px solid #cbd5e1;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  gap: 0.15rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
 }
 
 .deck-label {
   font-family: 'Outfit', sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: #94a3b8;
   text-align: center;
 }
 
-.deck-icon {
-  font-size: 2rem;
-}
-
-.deck-counter {
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #f8fafc;
-}
+.deck-icon { font-size: 1.4rem; }
+.deck-counter { font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; color: #f8fafc; }
 
 .deck-card-layer {
   position: absolute;
   inset: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #334155;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.layer-1 {
-  transform: translate(4px, 4px);
-  z-index: 2;
-}
-
-.layer-2 {
-  transform: translate(8px, 8px);
-  z-index: 1;
-}
+.layer-1 { transform: translate(3px, 3px); z-index: 2; }
+.layer-2 { transform: translate(6px, 6px); z-index: 1; }
 
 /* Zona de jugada activa */
 .turn-play-zone {
@@ -662,7 +546,7 @@ input[type="text"]:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.4rem;
 }
 
 .turn-stats-bar {
@@ -673,81 +557,39 @@ input[type="text"]:focus {
 .stat-bubble {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.35rem 0.9rem;
+  padding: 0.25rem 0.8rem;
   border-radius: 9999px;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
 }
 
-.stat-label {
-  color: var(--text-muted);
-}
-
-.stat-val {
-  font-weight: 800;
-  color: #38bdf8;
-  margin-left: 0.3rem;
-}
+.stat-label { color: var(--text-muted); }
+.stat-val { font-weight: 800; color: #38bdf8; margin-left: 0.25rem; }
 
 .risk-alert {
   background: rgba(239, 68, 68, 0.15);
   border: 1.5px solid #ef4444;
   color: #fca5a5;
-  padding: 0.5rem 1.2rem;
-  border-radius: 12px;
-  font-size: 0.88rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
   text-align: center;
-  animation: pulse-danger 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse-danger {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.02); }
-}
-
-.steal-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 450px;
-}
-
-.btn-steal-action {
-  background: linear-gradient(135deg, #f59e0b, #ea580c);
-  color: #ffffff;
-  border: 2px solid #fef08a;
-  border-radius: 14px;
-  padding: 0.75rem 1.2rem;
-  font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
-}
-
-.animate-bounce-steal {
-  animation: bounce-steal 1s infinite alternate cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes bounce-steal {
-  from { transform: translateY(0); }
-  to { transform: translateY(-4px); }
 }
 
 .turn-cards-display {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.8rem;
-  min-height: 120px;
-  padding: 0.5rem;
+  gap: 0.5rem;
+  min-height: 80px;
+  max-height: 110px;
+  overflow-y: auto;
   align-items: center;
   width: 100%;
 }
 
 .empty-turn-notice {
   color: var(--text-dim);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-style: italic;
 }
 
@@ -756,46 +598,37 @@ input[type="text"]:focus {
   transition: transform 0.2s ease;
 }
 
-.turn-card-stack:hover {
-  transform: translateY(-6px) scale(1.05);
-}
+.turn-card-stack:hover { transform: translateY(-4px) scale(1.05); }
 
 /* Botones de acción del turno */
 .turn-actions-bar {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
 }
 
 .turn-actions-bar .btn {
   flex: 1;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9rem;
 }
 
 .btn-draw {
   background: linear-gradient(135deg, #0ea5e9, #0284c7);
   color: #fff;
-  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
 }
 
 .btn-draw.btn-risk {
   background: linear-gradient(135deg, #f97316, #dc2626);
-  box-shadow: 0 10px 25px rgba(220, 38, 38, 0.45);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.45);
 }
 
 .btn-stop {
   background: linear-gradient(135deg, #10b981, #059669);
   color: #fff;
-  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-}
-
-.btn-safe-pulse {
-  animation: pulse-safe 1.8s infinite ease-in-out;
-}
-
-@keyframes pulse-safe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
 }
 
 /* Dock Inferior (Mi Zona) */
@@ -805,71 +638,52 @@ input[type="text"]:focus {
   left: 0;
   right: 0;
   z-index: 10;
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(15, 23, 42, 0.94);
   border-top: 1px solid var(--border-glass);
   backdrop-filter: blur(20px);
-  padding: 0.6rem 1.2rem;
+  padding: 0.45rem 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 52px;
 }
 
 .dock-stats {
   display: flex;
-  gap: 1.4rem;
+  gap: 1.2rem;
 }
 
 .dock-stat-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
-.dock-stat-item .icon {
-  font-size: 1.4rem;
-}
+.dock-stat-item .icon { font-size: 1.2rem; }
+.dock-val { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 800; color: #f8fafc; line-height: 1; }
+.dock-lbl { font-size: 0.68rem; color: var(--text-muted); }
 
-.dock-val {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #f8fafc;
-  line-height: 1.1;
-}
-
-.dock-lbl {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.reaction-bar {
-  display: flex;
-  gap: 0.35rem;
-}
-
+.reaction-bar { display: flex; gap: 0.25rem; }
 .reaction-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  font-size: 1.2rem;
-  border-radius: 10px;
-  width: 38px;
-  height: 38px;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease;
 }
 
-.reaction-btn:hover {
-  transform: translateY(-4px) scale(1.15);
-}
+.reaction-btn:hover { transform: translateY(-3px) scale(1.15); }
 
 .reaction-bubble {
   position: absolute;
-  top: -30px;
+  top: -25px;
   right: 10px;
-  font-size: 2rem;
+  font-size: 1.8rem;
   animation: float-reaction 2s forwards ease-out;
   pointer-events: none;
   z-index: 20;
@@ -877,198 +691,79 @@ input[type="text"]:focus {
 
 @keyframes float-reaction {
   0% { opacity: 0; transform: translateY(0) scale(0.6); }
-  20% { opacity: 1; transform: translateY(-15px) scale(1.2); }
-  80% { opacity: 1; transform: translateY(-35px) scale(1); }
-  100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
+  20% { opacity: 1; transform: translateY(-12px) scale(1.2); }
+  80% { opacity: 1; transform: translateY(-30px) scale(1); }
+  100% { opacity: 0; transform: translateY(-45px) scale(0.8); }
 }
 
-/* Historial de Eventos (Ticker) */
+/* Historial de Eventos (Ticker compacto horizontal/flotante) */
 .game-ticker {
-  background: rgba(18, 24, 38, 0.5);
+  background: rgba(18, 24, 38, 0.65);
   border: 1px solid var(--border-glass);
-  border-radius: 14px;
-  padding: 0.6rem 0.9rem;
-  max-height: 90px;
+  border-radius: 10px;
+  padding: 0.35rem 0.6rem;
+  max-height: 48px;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .logs-feed {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.15rem;
 }
 
-.logs-feed li {
-  font-size: 0.8rem;
-  color: #cbd5e1;
-}
-
-.log-time {
-  color: #64748b;
-  font-family: monospace;
-  margin-right: 0.4rem;
-}
+.logs-feed li { font-size: 0.74rem; color: #cbd5e1; }
+.log-time { color: #64748b; font-family: monospace; margin-right: 0.3rem; font-size: 0.68rem; }
 
 /* ==========================================================================
-   ESTILOS Y TAMAÑOS DE LAS CARTAS (SVG)
+   ESTILOS DE CARTAS & ANIMACIONES SVG
    ========================================================================== */
-
-.pelusa-card-wrapper {
-  position: relative;
-  display: inline-block;
-  user-select: none;
-}
-
-.pelusa-card-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
 
 .card-count-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -6px;
+  right: -6px;
   background: #f43f5e;
   border: 2px solid #ffffff;
   color: #ffffff;
   font-family: 'Outfit', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 900;
   border-radius: 9999px;
-  padding: 0.15rem 0.45rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  padding: 0.1rem 0.35rem;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  z-index: 5;
 }
 
-/* Tamaños de cartas */
-.pelusa-card-wrapper.tiny {
-  width: 36px;
-}
+/* Animaciones vivas */
+.anim-blink { animation: blink 4s infinite ease-in-out; transform-origin: center; }
+@keyframes blink { 0%, 45%, 55%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.1); } }
 
-.pelusa-card-wrapper.avatar {
-  width: 100%;
-}
+.anim-look { animation: look-side 5s infinite ease-in-out; }
+@keyframes look-side { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
 
-.pelusa-card-wrapper.mini {
-  width: 44px;
-}
+.anim-tongue { animation: wiggle-tongue 1.5s infinite ease-in-out; transform-origin: top center; }
+@keyframes wiggle-tongue { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(8deg); } }
 
-.pelusa-card-wrapper.medium {
-  width: 72px;
-}
+.anim-wink { animation: wink-cycle 3.5s infinite ease-in-out; }
+@keyframes wink-cycle { 0%, 40%, 60%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 
-.pelusa-card-wrapper.normal {
-  width: 85px;
-}
+.anim-wave-arm { animation: wave-arm 1.2s infinite ease-in-out; }
+@keyframes wave-arm { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-25deg); } }
 
-.pelusa-card-wrapper.large {
-  width: 110px;
-}
+.anim-look-around { animation: cyclops-look 4s infinite ease-in-out; }
+@keyframes cyclops-look { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-3px, 1px); } 75% { transform: translate(3px, -1px); } }
 
-/* ==========================================================================
-   ANIMACIONES VIVAS DE LOS 10 MONSTRUITOS
-   ========================================================================== */
+.anim-jump-happy { animation: jump-happy 1.8s infinite ease-in-out; transform-origin: bottom center; }
+@keyframes jump-happy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-/* 1. Parpadeo aleatorio natural */
-.anim-blink {
-  animation: blink 4s infinite ease-in-out;
-  transform-origin: center;
-}
+.anim-cheer-arms { animation: cheer-arms 0.9s infinite alternate ease-in-out; }
+@keyframes cheer-arms { from { transform: translateY(0); } to { transform: translateY(-3px); } }
 
-@keyframes blink {
-  0%, 45%, 55%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(0.1); }
-}
-
-/* 2. Mirar a los lados */
-.anim-look {
-  animation: look-side 5s infinite ease-in-out;
-}
-
-@keyframes look-side {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
-}
-
-/* 3. Lengüita juguetona (Pelusa 2) */
-.anim-tongue {
-  animation: wiggle-tongue 1.5s infinite ease-in-out;
-  transform-origin: top center;
-}
-
-@keyframes wiggle-tongue {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(8deg); }
-}
-
-/* 4. Cejas curiosas (Pelusa 3) */
-.anim-eyebrows {
-  animation: eyebrows-twitch 3s infinite ease-in-out;
-}
-
-@keyframes eyebrows-twitch {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
-}
-
-/* 5. Guiño pícaro (Pelusa 5) */
-.anim-wink {
-  animation: wink-cycle 3.5s infinite ease-in-out;
-}
-
-@keyframes wink-cycle {
-  0%, 40%, 60%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
-}
-
-/* 6. Brazo saludando alegre (Pelusa 7) */
-.anim-wave-arm {
-  animation: wave-arm 1.2s infinite ease-in-out;
-}
-
-@keyframes wave-arm {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-25deg); }
-}
-
-/* 7. Ojo cíclope misterioso mirando alrededor (Pelusa 8) */
-.anim-look-around {
-  animation: cyclops-look 4s infinite ease-in-out;
-}
-
-@keyframes cyclops-look {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-3px, 1px); }
-  75% { transform: translate(3px, -1px); }
-}
-
-/* 8. Salto y brazos festejando de alegría (Pelusa 10) */
-.anim-jump-happy {
-  animation: jump-happy 1.8s infinite ease-in-out;
-  transform-origin: bottom center;
-}
-
-@keyframes jump-happy {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-.anim-cheer-arms {
-  animation: cheer-arms 0.9s infinite alternate ease-in-out;
-}
-
-@keyframes cheer-arms {
-  from { transform: translateY(0); }
-  to { transform: translateY(-3px); }
-}
-
-/* Animación de pantalla temblando al pasarse */
-.screen-shake {
-  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-
+.screen-shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 @keyframes shake {
   10%, 90% { transform: translate3d(-2px, 0, 0); }
   20%, 80% { transform: translate3d(3px, 0, 0); }
@@ -1076,10 +771,7 @@ input[type="text"]:focus {
   40%, 60% { transform: translate3d(5px, 0, 0); }
 }
 
-/* ==========================================================================
-   MODAL DE FIN DE JUEGO & PODIO
-   ========================================================================== */
-
+/* Fin de juego */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1092,132 +784,26 @@ input[type="text"]:focus {
   padding: 1rem;
 }
 
-.gameover-card {
-  width: 100%;
-  max-width: 520px;
-  padding: 2.2rem 1.8rem;
-  text-align: center;
-}
+.gameover-card { width: 100%; max-width: 480px; padding: 2rem 1.6rem; text-align: center; }
+.trophy-badge { font-size: 3rem; margin-bottom: 0.3rem; }
+.gameover-card h2 { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 900; margin-bottom: 0.3rem; }
+.gameover-desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.4rem; }
+.podium-container { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; max-height: 250px; overflow-y: auto; }
+.podium-row { display: flex; align-items: center; gap: 0.6rem; background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(255, 255, 255, 0.08); padding: 0.6rem 0.8rem; border-radius: 12px; }
+.podium-row.place-1 { background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.2)); border-color: #f59e0b; }
+.podium-rank { font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 900; }
+.podium-avatar { width: 28px; height: 40px; }
+.podium-name { flex: 1; text-align: left; font-weight: 700; font-size: 0.9rem; }
+.podium-score { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 900; color: #38bdf8; }
 
-.trophy-badge {
-  font-size: 3.5rem;
-  margin-bottom: 0.5rem;
-  animation: trophy-float 2s infinite ease-in-out;
-}
-
-@keyframes trophy-float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-8px) scale(1.1); }
-}
-
-.gameover-card h2 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 2rem;
-  font-weight: 900;
-  margin-bottom: 0.4rem;
-}
-
-.gameover-desc {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  margin-bottom: 1.6rem;
-}
-
-.podium-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-bottom: 1.8rem;
-}
-
-.podium-row {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  padding: 0.75rem 1rem;
-  border-radius: 14px;
-}
-
-.podium-row.place-1 {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.2));
-  border-color: #f59e0b;
-}
-
-.podium-row.my-row {
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.35);
-}
-
-.podium-rank {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 900;
-}
-
-.podium-avatar {
-  width: 32px;
-  height: 46px;
-}
-
-.podium-name {
-  flex: 1;
-  text-align: left;
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.podium-score {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 900;
-  color: #38bdf8;
-}
-
-/* ==========================================================================
-   OPTIMIZACIONES MÓVILES (RESPONSIVE)
-   ========================================================================== */
-
+/* Responsive adjustments */
 @media (max-width: 600px) {
-  .lobby-box {
-    padding: 1.5rem 1.2rem;
-  }
-
-  .game-topbar {
-    padding: 0.4rem 0.8rem;
-  }
-
-  .turn-badge {
-    font-size: 0.75rem;
-    padding: 0.35rem 0.8rem;
-  }
-
-  .deck-pile {
-    width: 90px;
-    height: 125px;
-  }
-
-  .pelusa-card-wrapper.medium {
-    width: 58px;
-  }
-
-  .turn-actions-bar {
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .turn-actions-bar .btn {
-    padding: 0.75rem;
-    font-size: 0.95rem;
-  }
-
-  .my-dock {
-    padding: 0.5rem 0.8rem;
-  }
-
-  .reaction-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
+  #screen-game { padding: 0.3rem 0.5rem 3.8rem 0.5rem; }
+  .game-topbar { padding: 0.2rem 0.5rem; height: 38px; }
+  .turn-badge { font-size: 0.72rem; padding: 0.25rem 0.6rem; }
+  .deck-pile { width: 68px; height: 95px; }
+  .my-dock { padding: 0.35rem 0.6rem; height: 46px; }
+  .dock-stat-item .icon { font-size: 1rem; }
+  .dock-val { font-size: 0.95rem; }
+  .reaction-btn { width: 28px; height: 28px; font-size: 0.95rem; }
 }

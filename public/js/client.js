@@ -1,27 +1,34 @@
 /**
  * Cliente de juego Pelusas - Socket.io & Manejo de Interfaz
+ * Reconexión de sesiones móviles y robo manual tocando cartas del rival
  */
 
 const socket = io();
 
-// Estado local del cliente
+// Token persistente del jugador para que no pierda la partida al cambiar a WhatsApp
+let playerToken = localStorage.getItem('pelusa_player_token');
+if (!playerToken) {
+  playerToken = 'p_' + Math.random().toString(36).substring(2, 11);
+  localStorage.setItem('pelusa_player_token', playerToken);
+}
+
 let myPlayerId = null;
 let currentRoom = null;
 let selectedAvatar = 1;
 
-// Elementos DOM principales
+// Elementos DOM
 const screenLobby = document.getElementById('screen-lobby');
 const screenGame = document.getElementById('screen-game');
 const screenGameOver = document.getElementById('screen-gameover');
 
-// Inputs de Lobby
+// Lobby
 const inputPlayerName = document.getElementById('input-player-name');
 const inputRoomCode = document.getElementById('input-room-code');
 const btnCreateRoom = document.getElementById('btn-create-room');
 const btnJoinRoom = document.getElementById('btn-join-room');
 const avatarSelector = document.getElementById('avatar-selector');
 
-// Componentes de la Sala de Espera
+// Espera
 const lobbyWaitingArea = document.getElementById('lobby-waiting-area');
 const lobbyRoomCodeText = document.getElementById('lobby-room-code-text');
 const btnWhatsappInvite = document.getElementById('btn-whatsapp-invite');
@@ -29,7 +36,7 @@ const btnCopyRoomLink = document.getElementById('btn-copy-room-link');
 const lobbyPlayersList = document.getElementById('lobby-players-list');
 const btnStartGame = document.getElementById('btn-start-game');
 
-// Componentes de la Mesa de Juego
+// Mesa de Juego
 const gameRoomCode = document.getElementById('game-room-code');
 const deckCounter = document.getElementById('deck-counter');
 const deckPile = document.getElementById('deck-pile');
@@ -38,25 +45,22 @@ const turnDrawnCards = document.getElementById('turn-drawn-cards');
 const turnStatusBadge = document.getElementById('turn-status-badge');
 const uniqueCounterText = document.getElementById('unique-counter-text');
 const riskWarning = document.getElementById('risk-warning');
-const stealActionsContainer = document.getElementById('steal-actions-container');
+const btnSoundToggle = document.getElementById('btn-sound-toggle');
 
-// Botones de acción del jugador
+// Acciones del jugador
 const btnDrawCard = document.getElementById('btn-draw-card');
 const btnStopTurn = document.getElementById('btn-stop-turn');
 const mySafeScore = document.getElementById('my-safe-score');
 const mySafeCount = document.getElementById('my-safe-count');
 const myExposedCount = document.getElementById('my-exposed-count');
 
-// Logs de eventos y chat de reacciones
+// Logs de eventos y reacciones
 const gameLogsList = document.getElementById('game-logs-list');
 const reactionButtons = document.querySelectorAll('.reaction-btn');
 
-// --- Inicialización ---
 document.addEventListener('DOMContentLoaded', () => {
-  // Construir selector de avatares (1 al 10)
   buildAvatarSelector();
 
-  // Comprobar si hay un código de sala en la URL (?room=PELU-XXXX)
   const urlParams = new URLSearchParams(window.location.search);
   const roomParam = urlParams.get('room');
   if (roomParam) {
@@ -64,8 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
     inputPlayerName.focus();
   }
 
-  // Activar sonidos al primer clic del usuario
   document.body.addEventListener('click', () => sounds.init(), { once: true });
+
+  if (btnSoundToggle) {
+    btnSoundToggle.onclick = () => {
+      sounds.muted = !sounds.muted;
+      btnSoundToggle.innerText = sounds.muted ? '🔇' : '🔊';
+    };
+  }
 });
 
 function buildAvatarSelector() {
@@ -83,20 +93,39 @@ function buildAvatarSelector() {
   }
 }
 
-// --- Eventos de Conexión & Sockets ---
+// --- Conexión y Reconexión Automática ---
 socket.on('connect', () => {
   myPlayerId = socket.id;
-  console.log('Conectado al servidor con ID:', myPlayerId);
+  console.log('Conectado a Pelusas con ID:', myPlayerId);
+
+  // Intentar reconectar si se regresa de WhatsApp
+  const savedRoom = localStorage.getItem('pelusa_active_room');
+  if (savedRoom) {
+    socket.emit('reconnect_session', { roomCode: savedRoom, playerToken });
+  }
+});
+
+socket.on('reconnect_success', ({ state }) => {
+  currentRoom = state;
+  console.log('Reconexión exitosa a la sala:', state.code);
+  if (state.status === 'playing') {
+    renderGame(state);
+  } else if (state.status === 'lobby') {
+    showLobbyWaiting(state.code);
+    updateLobbyPlayers(state.players, state.hostId);
+  }
 });
 
 socket.on('room_created', ({ roomCode, state }) => {
   currentRoom = state;
+  localStorage.setItem('pelusa_active_room', roomCode);
   showLobbyWaiting(roomCode);
   updateLobbyPlayers(state.players, state.hostId);
 });
 
 socket.on('room_state', (state) => {
   currentRoom = state;
+  localStorage.setItem('pelusa_active_room', state.code);
 
   if (state.status === 'lobby') {
     showLobbyWaiting(state.code);
@@ -109,7 +138,6 @@ socket.on('room_state', (state) => {
 });
 
 socket.on('game_started', (state) => {
-  console.log('¡Partida iniciada!', state);
   if (state && state.status === 'playing') {
     renderGame(state);
   }
@@ -121,7 +149,7 @@ socket.on('player_joined', (state) => {
   }
 });
 
-socket.on('card_drawn', ({ card, busted, steals, gameEnded }) => {
+socket.on('card_drawn', ({ card, busted, gameEnded }) => {
   if (busted) {
     sounds.playBust();
     triggerScreenShake();
@@ -149,7 +177,7 @@ socket.on('error_msg', ({ message }) => {
 // --- Acciones de Lobby ---
 btnCreateRoom.onclick = () => {
   const name = inputPlayerName.value.trim() || 'Jugador 1';
-  socket.emit('create_room', { playerName: name, avatar: selectedAvatar });
+  socket.emit('create_room', { playerName: name, avatar: selectedAvatar, playerToken });
 };
 
 btnJoinRoom.onclick = () => {
@@ -159,11 +187,7 @@ btnJoinRoom.onclick = () => {
     alert('Ingresa el código de la sala');
     return;
   }
-  socket.emit('join_room', { roomCode: code, playerName: name, avatar: selectedAvatar });
-};
-
-btnStartGame.onclick = () => {
-  socket.emit('start_game');
+  socket.emit('join_room', { roomCode: code, playerName: name, avatar: selectedAvatar, playerToken });
 };
 
 function showLobbyWaiting(code) {
@@ -171,7 +195,6 @@ function showLobbyWaiting(code) {
   lobbyWaitingArea.style.display = 'block';
   lobbyRoomCodeText.innerText = code;
 
-  // Configurar enlace de WhatsApp
   const shareUrl = `${window.location.origin}/?room=${code}`;
   const whatsappMsg = `¡Únete a mi partida de Pelusas en Juegos AlanMath! 🎲🃏\nPulsa aquí para entrar a la sala:\n${shareUrl}`;
   btnWhatsappInvite.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`;
@@ -188,8 +211,8 @@ function showLobbyWaiting(code) {
 function updateLobbyPlayers(players, hostId) {
   lobbyPlayersList.innerHTML = '';
   players.forEach(p => {
-    const isHost = p.id === hostId;
-    const isMe = p.id === myPlayerId;
+    const isHost = p.id === hostId || p.token === hostId;
+    const isMe = p.id === myPlayerId || p.token === playerToken;
     const item = document.createElement('div');
     item.className = 'lobby-player-card';
     item.innerHTML = `
@@ -202,10 +225,10 @@ function updateLobbyPlayers(players, hostId) {
     lobbyPlayersList.appendChild(item);
   });
 
-  // Mostrar botón de Iniciar solo al anfitrión con mínimo 2 jugadores
-  const isMeHost = hostId === myPlayerId;
+  const isMeHost = hostId === myPlayerId || hostId === playerToken;
   btnStartGame.style.display = isMeHost ? 'block' : 'none';
   btnStartGame.disabled = players.length < 2;
+
   if (players.length < 2 && isMeHost) {
     btnStartGame.innerText = '⏳ Esperando a tus amigos (mínimo 2 jugadores)...';
     btnStartGame.classList.remove('btn-ready-pulse');
@@ -216,7 +239,6 @@ function updateLobbyPlayers(players, hostId) {
 }
 
 btnStartGame.onclick = () => {
-  console.log('Emitiendo start_game al servidor...');
   btnStartGame.disabled = true;
   btnStartGame.innerText = 'Iniciando partida...';
   socket.emit('start_game');
@@ -234,30 +256,29 @@ function renderGame(state) {
   const activePlayer = state.players[state.currentTurnIndex];
   const isMyTurn = state.isMyTurn;
 
-  // Banner de turno
   if (isMyTurn) {
     turnStatusBadge.className = 'turn-badge my-turn';
     turnStatusBadge.innerHTML = '⭐ ¡ES TU TURNO! Elige tu jugada';
   } else {
     turnStatusBadge.className = 'turn-badge';
-    turnStatusBadge.innerHTML = `Turno de <strong>${escapeHtml(activePlayer.name)}</strong>...`;
+    turnStatusBadge.innerHTML = `Turno de <strong>${escapeHtml(activePlayer ? activePlayer.name : '')}</strong>...`;
   }
 
-  // Renderizar oponentes
-  renderOpponents(state.players, state.currentTurnIndex);
+  // Renderizar oponentes con cartas tocables para robar
+  renderOpponents(state.players, state.currentTurnIndex, isMyTurn, state.validStealValue);
 
-  // Mis datos en la barra inferior
-  const me = state.players.find(p => p.id === myPlayerId);
+  // Mis datos
+  const me = state.players.find(p => p.id === myPlayerId || p.token === playerToken);
   if (me) {
     mySafeScore.innerText = me.safeScore;
     mySafeCount.innerText = me.safeCount;
     myExposedCount.innerText = me.exposedCards.length;
   }
 
-  // Cartas robadas en este turno
+  // Cartas del turno
   renderTurnCards(state.turnState.drawnThisTurn);
 
-  // Contador de números diferentes y condición de plantarse
+  // Contador de números diferentes
   const uniqueNumbers = new Set(state.turnState.drawnThisTurn.map(c => c.value));
   const uniqueCount = uniqueNumbers.size;
   uniqueCounterText.innerText = `${uniqueCount} / 3`;
@@ -271,14 +292,10 @@ function renderGame(state) {
     riskWarning.style.display = 'none';
   }
 
-  // Oportunidades de robo a otros jugadores
-  renderStealOpportunities(state.turnState.stealOpportunities, isMyTurn);
-
-  // Habilitar / deshabilitar botones según el turno
+  // Botones de acción
   btnDrawCard.disabled = !isMyTurn || state.deckCount === 0 || state.turnState.isBusted;
   btnStopTurn.disabled = !isMyTurn || !state.turnState.canStop || state.turnState.isBusted;
 
-  // Botón de robar con advertencia visual de riesgo
   if (isMyTurn && uniqueCount >= 3) {
     btnDrawCard.classList.add('btn-risk');
     btnDrawCard.innerHTML = '⚡ Arriesgar (Robar Carta)';
@@ -289,22 +306,21 @@ function renderGame(state) {
     btnStopTurn.classList.remove('btn-safe-pulse');
   }
 
-  // Actualizar historial de eventos
   renderLogs(state.logs);
 }
 
-function renderOpponents(players, activeTurnIndex) {
+function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {
   opponentsContainer.innerHTML = '';
 
   players.forEach((p, idx) => {
-    if (p.id === myPlayerId) return; // No mostrarme a mí mismo en la zona de rivales
+    const isMe = p.id === myPlayerId || p.token === playerToken;
+    if (isMe) return;
 
     const isHisTurn = idx === activeTurnIndex;
     const card = document.createElement('div');
     card.id = `player-card-${p.id}`;
     card.className = `opponent-box ${isHisTurn ? 'active-turn' : ''} ${!p.connected ? 'disconnected' : ''}`;
 
-    // Agrupar cartas expuestas por valor
     const exposedGroups = {};
     p.exposedCards.forEach(c => {
       exposedGroups[c.value] = (exposedGroups[c.value] || 0) + 1;
@@ -316,7 +332,16 @@ function renderOpponents(players, activeTurnIndex) {
       exposedCardsHtml = '<div class="no-cards-note">Sin cartas expuestas</div>';
     } else {
       values.forEach(v => {
-        exposedCardsHtml += renderPelusaCard(Number(v), { size: 'mini', badge: exposedGroups[v] });
+        const valNum = Number(v);
+        // La carta es robable si es mi turno y es el número que acabo de sacar
+        const isClickable = isMyTurn && validStealValue === valNum;
+        exposedCardsHtml += `
+          <div class="stealable-card-target ${isClickable ? 'can-steal-touch' : ''}" 
+               onclick="handleStealCard('${p.id}', ${valNum})" 
+               title="${isClickable ? '¡Toca para robarle esta carta!' : ''}">
+            ${renderPelusaCard(valNum, { size: 'mini', badge: exposedGroups[v], isClickable })}
+          </div>
+        `;
       });
     }
 
@@ -325,11 +350,11 @@ function renderOpponents(players, activeTurnIndex) {
         <div class="opp-avatar">${renderPelusaCard(p.avatar || 1, { size: 'avatar' })}</div>
         <div class="opp-info">
           <div class="opp-name">${escapeHtml(p.name)} ${isHisTurn ? '<span class="playing-indicator">🎯 Jugando</span>' : ''}</div>
-          <div class="opp-score">🔒 ${p.safeScore} pts seguros (${p.safeCount} cartas)</div>
+          <div class="opp-score">🔒 ${p.safeScore} pts (${p.safeCount} cartas)</div>
         </div>
       </div>
       <div class="opp-exposed-section">
-        <div class="section-title">Cartas expuestas (en riesgo de robo):</div>
+        <div class="section-title">Cartas expuestas:</div>
         <div class="opp-exposed-cards">${exposedCardsHtml}</div>
       </div>
     `;
@@ -338,6 +363,20 @@ function renderOpponents(players, activeTurnIndex) {
   });
 }
 
+// Acción de robo manual al tocar la carta de un rival
+window.handleStealCard = function(targetId, value) {
+  if (!currentRoom || !currentRoom.isMyTurn) return;
+
+  if (currentRoom.validStealValue !== value) {
+    // Si intenta tocar una carta que no corresponde con la que acaba de sacar
+    sounds.playBust();
+    return;
+  }
+
+  // Ejecutar robo
+  socket.emit('steal_cards', { targetId, value });
+};
+
 function renderTurnCards(cards) {
   turnDrawnCards.innerHTML = '';
   if (cards.length === 0) {
@@ -345,7 +384,6 @@ function renderTurnCards(cards) {
     return;
   }
 
-  // Agrupar cartas del turno por valor
   const groups = {};
   cards.forEach(c => {
     groups[c.value] = (groups[c.value] || 0) + 1;
@@ -360,28 +398,6 @@ function renderTurnCards(cards) {
   });
 }
 
-function renderStealOpportunities(steals, isMyTurn) {
-  stealActionsContainer.innerHTML = '';
-  if (!steals || steals.length === 0) return;
-
-  steals.forEach(s => {
-    const btn = document.createElement('button');
-    btn.className = 'btn-steal-action animate-bounce-steal';
-    btn.innerHTML = `⚡ ¡Robar ${s.count} carta(s) de valor ${s.value} a ${escapeHtml(s.targetName)}!`;
-
-    if (isMyTurn) {
-      btn.onclick = () => {
-        socket.emit('steal_cards', { targetId: s.targetId, value: s.value });
-      };
-    } else {
-      btn.disabled = true;
-      btn.innerHTML = `⚠️ ${escapeHtml(s.targetName)} puede ser robado por valor ${s.value}`;
-    }
-
-    stealActionsContainer.appendChild(btn);
-  });
-}
-
 function renderLogs(logs) {
   gameLogsList.innerHTML = '';
   logs.forEach(l => {
@@ -391,7 +407,6 @@ function renderLogs(logs) {
   });
 }
 
-// --- Acciones del Jugador ---
 btnDrawCard.onclick = () => {
   socket.emit('draw_card');
 };
@@ -406,7 +421,6 @@ btnStopTurn.onclick = () => {
   socket.emit('stop_turn');
 };
 
-// Reacciones en vivo
 reactionButtons.forEach(btn => {
   btn.onclick = () => {
     const emoji = btn.getAttribute('data-emoji');
@@ -434,7 +448,6 @@ function triggerScreenShake() {
   setTimeout(() => document.body.classList.remove('screen-shake'), 600);
 }
 
-// --- Pantalla de Fin de Juego ---
 function renderGameOver(state) {
   screenGame.style.display = 'none';
   screenGameOver.style.display = 'flex';
@@ -458,6 +471,7 @@ function renderGameOver(state) {
   });
 
   document.getElementById('btn-play-again').onclick = () => {
+    localStorage.removeItem('pelusa_active_room');
     window.location.reload();
   };
 }

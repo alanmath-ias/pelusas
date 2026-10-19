@@ -1,355 +1,260 @@
 /**
  * Generador visual de las 10 cartas y monstruitos de Pelusas
- * Gráficos vectoriales SVG animados de alta fidelidad
+ * Colores sólidos y gradientes seguros sin colisión de IDs en SVG
  */
 
 const PELUSAS_DATA = {
   1: {
     name: 'Pelusa Celeste',
-    color1: '#0284c7',
-    color2: '#38bdf8',
-    numColor: '#38bdf8',
-    copies: 13,
+    bg: 'linear-gradient(135deg, #38bdf8, #0284c7)',
+    borderColor: '#bae6fd',
+    textColor: '#0284c7',
     renderMonster: () => `
       <g class="pelusa-monster m-1">
-        <!-- Cuerpo redondo peludo -->
-        <circle cx="50" cy="65" r="28" fill="#38bdf8" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <path d="M24 62 Q20 50 28 45 Q35 38 50 37 Q65 38 72 45 Q80 50 76 62 Q78 75 70 85 Q50 95 30 85 Q22 75 24 62 Z" fill="#0284c7"/>
-        <circle cx="50" cy="65" r="23" fill="#38bdf8"/>
-        <!-- Ojos tiernos grandes -->
+        <circle cx="50" cy="62" r="26" fill="#0284c7"/>
+        <circle cx="50" cy="62" r="22" fill="#38bdf8"/>
         <g class="anim-blink">
-          <circle cx="43" cy="58" r="9" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
-          <circle cx="57" cy="58" r="9" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+          <circle cx="43" cy="56" r="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.8"/>
+          <circle cx="57" cy="56" r="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.8"/>
           <g class="anim-look">
-            <circle cx="44" cy="58" r="5" fill="#0369a1"/>
-            <circle cx="44" cy="58" r="3" fill="#0f172a"/>
-            <circle cx="46" cy="56" r="1.5" fill="#ffffff"/>
-            <circle cx="58" cy="58" r="5" fill="#0369a1"/>
-            <circle cx="58" cy="58" r="3" fill="#0f172a"/>
-            <circle cx="60" cy="56" r="1.5" fill="#ffffff"/>
+            <circle cx="44" cy="56" r="4.5" fill="#0369a1"/>
+            <circle cx="44" cy="56" r="2.5" fill="#0f172a"/>
+            <circle cx="46" cy="54" r="1.2" fill="#ffffff"/>
+            <circle cx="58" cy="56" r="4.5" fill="#0369a1"/>
+            <circle cx="58" cy="56" r="2.5" fill="#0f172a"/>
+            <circle cx="60" cy="54" r="1.2" fill="#ffffff"/>
           </g>
         </g>
-        <!-- Boca feliz -->
-        <path d="M44 72 Q50 78 56 72" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/>
-        <ellipse cx="50" cy="74" rx="3" ry="2" fill="#f43f5e" opacity="0.8"/>
+        <path d="M44 68 Q50 74 56 68" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="50" cy="70" rx="2.5" ry="1.5" fill="#f43f5e"/>
       </g>
     `
   },
   2: {
     name: 'Pelusa Púrpura',
-    color1: '#6b21a8',
-    color2: '#a855f7',
-    numColor: '#c084fc',
-    copies: 13,
+    bg: 'linear-gradient(135deg, #a855f7, #6b21a8)',
+    borderColor: '#e9d5ff',
+    textColor: '#6b21a8',
     renderMonster: () => `
       <g class="pelusa-monster m-2">
-        <!-- Cuerpo rectangular redondeado -->
-        <rect x="25" y="42" width="50" height="46" rx="14" fill="#9333ea" stroke="#581c87" stroke-width="2.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Pelitos en esquinas -->
-        <path d="M25 45 Q20 38 28 36 Q32 42 35 43" fill="#a855f7"/>
-        <path d="M75 45 Q80 38 72 36 Q68 42 65 43" fill="#a855f7"/>
-        <!-- Ojos saltones -->
+        <rect x="25" y="42" width="50" height="42" rx="12" fill="#9333ea" stroke="#581c87" stroke-width="2"/>
         <g class="anim-blink">
-          <ellipse cx="38" cy="52" rx="8" ry="7" fill="#ffffff" stroke="#2e1065" stroke-width="2"/>
-          <circle cx="40" cy="52" r="3.5" fill="#10b981"/>
-          <circle cx="40" cy="52" r="2" fill="#0f172a"/>
-          <ellipse cx="62" cy="52" rx="8" ry="7" fill="#ffffff" stroke="#2e1065" stroke-width="2"/>
-          <circle cx="60" cy="52" r="3.5" fill="#10b981"/>
-          <circle cx="60" cy="52" r="2" fill="#0f172a"/>
+          <ellipse cx="38" cy="50" rx="7.5" ry="6.5" fill="#ffffff" stroke="#2e1065" stroke-width="1.8"/>
+          <circle cx="40" cy="50" r="3" fill="#10b981"/>
+          <circle cx="40" cy="50" r="1.5" fill="#0f172a"/>
+          <ellipse cx="62" cy="50" rx="7.5" ry="6.5" fill="#ffffff" stroke="#2e1065" stroke-width="1.8"/>
+          <circle cx="60" cy="50" r="3" fill="#10b981"/>
+          <circle cx="60" cy="50" r="1.5" fill="#0f172a"/>
         </g>
-        <!-- Boca con lengua afuera animada -->
-        <path d="M40 68 Q50 67 60 68" stroke="#2e1065" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        <path class="anim-tongue" d="M48 68 Q50 78 54 78 Q58 78 56 68 Z" fill="#fb7185" stroke="#be123c" stroke-width="1.5"/>
+        <path d="M40 64 Q50 63 60 64" stroke="#2e1065" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path class="anim-tongue" d="M48 64 Q50 74 54 74 Q58 74 56 64 Z" fill="#fb7185" stroke="#be123c" stroke-width="1.2"/>
       </g>
     `
   },
   3: {
     name: 'Pelusa Terracota',
-    color1: '#c2410c',
-    color2: '#fb923c',
-    numColor: '#fb923c',
-    copies: 13,
+    bg: 'linear-gradient(135deg, #fb923c, #c2410c)',
+    borderColor: '#ffedd5',
+    textColor: '#c2410c',
     renderMonster: () => `
       <g class="pelusa-monster m-3">
-        <!-- Cuerpo montaña inclinado -->
-        <path d="M22 88 Q30 75 40 55 Q48 38 58 45 Q70 52 74 72 Q78 85 68 88 Q45 92 22 88 Z" fill="#ea580c" stroke="#7c2d12" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Mechoncitos -->
-        <circle cx="30" cy="85" r="8" fill="#ea580c"/>
-        <circle cx="65" cy="85" r="9" fill="#ea580c"/>
-        <!-- Cejas curiosas -->
-        <path class="anim-eyebrows" d="M45 48 Q50 45 54 48 M58 50 Q63 46 67 49" stroke="#7c2d12" stroke-width="2" stroke-linecap="round" fill="none"/>
-        <!-- Ojos grandes expresivos -->
+        <path d="M22 84 Q30 72 40 52 Q48 38 58 44 Q70 50 74 68 Q78 80 68 84 Q45 88 22 84 Z" fill="#ea580c" stroke="#7c2d12" stroke-width="2"/>
         <g class="anim-blink">
-          <ellipse cx="49" cy="57" rx="7" ry="8" fill="#ffffff" stroke="#431407" stroke-width="2"/>
-          <circle cx="51" cy="58" r="3" fill="#1c1917"/>
-          <circle cx="53" cy="56" r="1.2" fill="#ffffff"/>
-          <ellipse cx="64" cy="58" rx="7" ry="8" fill="#ffffff" stroke="#431407" stroke-width="2"/>
-          <circle cx="66" cy="59" r="3" fill="#1c1917"/>
-          <circle cx="68" cy="57" r="1.2" fill="#ffffff"/>
+          <ellipse cx="49" cy="54" rx="6.5" ry="7.5" fill="#ffffff" stroke="#431407" stroke-width="1.8"/>
+          <circle cx="51" cy="55" r="2.8" fill="#1c1917"/>
+          <circle cx="53" cy="53" r="1" fill="#ffffff"/>
+          <ellipse cx="64" cy="55" rx="6.5" ry="7.5" fill="#ffffff" stroke="#431407" stroke-width="1.8"/>
+          <circle cx="66" cy="56" r="2.8" fill="#1c1917"/>
+          <circle cx="68" cy="54" r="1" fill="#ffffff"/>
         </g>
-        <!-- Boquita curiosa -->
-        <ellipse cx="58" cy="74" rx="3.5" ry="2.5" fill="#431407"/>
+        <ellipse cx="58" cy="70" rx="3" ry="2" fill="#431407"/>
       </g>
     `
   },
   4: {
     name: 'Pelusa Magenta',
-    color1: '#86198f',
-    color2: '#e879f9',
-    numColor: '#f472b6',
-    copies: 13,
+    bg: 'linear-gradient(135deg, #e879f9, #86198f)',
+    borderColor: '#f5d0fe',
+    textColor: '#86198f',
     renderMonster: () => `
       <g class="pelusa-monster m-4">
-        <!-- Cuerpo cúpula con mechones -->
-        <path d="M26 86 Q22 65 34 46 Q45 36 55 36 Q68 36 76 52 Q82 68 76 86 Q50 92 26 86 Z" fill="#c026d3" stroke="#4a044e" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Orejitas / mechones -->
-        <polygon points="34,44 26,32 38,36" fill="#e879f9" stroke="#4a044e" stroke-width="1.5"/>
-        <polygon points="68,44 76,32 64,36" fill="#e879f9" stroke="#4a044e" stroke-width="1.5"/>
-        <!-- Ojos redondos -->
+        <path d="M26 84 Q22 64 34 46 Q45 36 55 36 Q68 36 76 50 Q82 66 76 84 Q50 90 26 84 Z" fill="#c026d3" stroke="#4a044e" stroke-width="2"/>
+        <polygon points="34,44 26,34 38,36" fill="#e879f9"/>
+        <polygon points="68,44 76,34 64,36" fill="#e879f9"/>
         <g class="anim-blink">
-          <circle cx="43" cy="54" r="7.5" fill="#ffffff" stroke="#4a044e" stroke-width="2"/>
-          <circle cx="44" cy="54" r="3" fill="#0284c7"/>
-          <circle cx="44" cy="54" r="1.5" fill="#0f172a"/>
-          <circle cx="61" cy="54" r="7.5" fill="#ffffff" stroke="#4a044e" stroke-width="2"/>
-          <circle cx="60" cy="54" r="3" fill="#0284c7"/>
-          <circle cx="60" cy="54" r="1.5" fill="#0f172a"/>
+          <circle cx="43" cy="52" r="7" fill="#ffffff" stroke="#4a044e" stroke-width="1.8"/>
+          <circle cx="44" cy="52" r="2.8" fill="#0284c7"/>
+          <circle cx="61" cy="52" r="7" fill="#ffffff" stroke="#4a044e" stroke-width="1.8"/>
+          <circle cx="60" cy="52" r="2.8" fill="#0284c7"/>
         </g>
-        <!-- Boca abierta sonriente con 2 dientitos -->
-        <path class="anim-bounce" d="M42 68 Q52 82 62 68 Z" fill="#3b0764" stroke="#4a044e" stroke-width="2"/>
-        <rect x="47" y="68" width="3" height="3.5" rx="1" fill="#ffffff"/>
-        <rect x="54" y="68" width="3" height="3.5" rx="1" fill="#ffffff"/>
+        <path class="anim-bounce" d="M42 66 Q52 78 62 66 Z" fill="#3b0764"/>
+        <rect x="47" y="66" width="2.5" height="3" rx="1" fill="#ffffff"/>
+        <rect x="54" y="66" width="2.5" height="3" rx="1" fill="#ffffff"/>
       </g>
     `
   },
   5: {
     name: 'Pelusa Lima',
-    color1: '#4d7c0f',
-    color2: '#a3e635',
-    numColor: '#a3e635',
-    copies: 13,
+    bg: 'linear-gradient(135deg, #a3e635, #4d7c0f)',
+    borderColor: '#ecfccb',
+    textColor: '#4d7c0f',
     renderMonster: () => `
       <g class="pelusa-monster m-5">
-        <!-- Cuerpo dinámico hacia atrás -->
-        <path d="M25 86 Q20 70 30 52 Q42 42 62 40 Q75 42 82 50 Q78 62 70 75 Q60 88 38 88 Z" fill="#84cc16" stroke="#365314" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Mechones peinados hacia atrás -->
-        <path d="M60 40 Q78 30 76 44 M52 38 Q68 24 64 40 M45 42 Q58 20 54 38" stroke="#365314" stroke-width="2" fill="#a3e635"/>
-        <!-- Ojos: Guiño animado pillo -->
+        <path d="M25 84 Q20 68 30 52 Q42 42 62 40 Q75 42 82 50 Q78 62 70 74 Q60 86 38 86 Z" fill="#84cc16" stroke="#365314" stroke-width="2"/>
         <g class="anim-wink">
-          <!-- Ojo izquierdo bien abierto -->
-          <circle cx="45" cy="56" r="7.5" fill="#ffffff" stroke="#1a2e05" stroke-width="2"/>
-          <circle cx="46" cy="56" r="3.2" fill="#15803d"/>
-          <circle cx="46" cy="56" r="1.8" fill="#0f172a"/>
-          <!-- Ojo derecho guiñando -->
-          <path class="eye-wink-line" d="M58 56 Q64 51 70 56" stroke="#1a2e05" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <circle cx="45" cy="54" r="7" fill="#ffffff" stroke="#1a2e05" stroke-width="1.8"/>
+          <circle cx="46" cy="54" r="3" fill="#15803d"/>
+          <circle cx="46" cy="54" r="1.5" fill="#0f172a"/>
+          <path d="M58 54 Q64 50 70 54" stroke="#1a2e05" stroke-width="2.2" stroke-linecap="round" fill="none"/>
         </g>
-        <!-- Sonrisa traviesa con colmillo -->
-        <path d="M42 70 Q54 78 68 68" stroke="#1a2e05" stroke-width="2" fill="none"/>
-        <polygon points="46,71 49,76 52,72" fill="#ffffff" stroke="#1a2e05" stroke-width="1"/>
+        <path d="M42 68 Q54 75 68 66" stroke="#1a2e05" stroke-width="2" fill="none"/>
+        <polygon points="46,69 49,74 52,70" fill="#ffffff"/>
       </g>
     `
   },
   6: {
     name: 'Pelusa Ámbar',
-    color1: '#b45309',
-    color2: '#fbbf24',
-    numColor: '#f59e0b',
-    copies: 9,
+    bg: 'linear-gradient(135deg, #fbbf24, #b45309)',
+    borderColor: '#fef3c7',
+    textColor: '#b45309',
     renderMonster: () => `
       <g class="pelusa-monster m-6">
-        <!-- Cuerpo gordito suave -->
-        <ellipse cx="50" cy="68" rx="28" ry="22" fill="#f59e0b" stroke="#78350f" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <path d="M26 66 Q20 54 28 50 Q36 48 48 48 Q64 48 72 50 Q80 54 74 66" fill="#f59e0b"/>
-        <!-- Ojos dormilones felices -->
+        <ellipse cx="50" cy="65" rx="27" ry="20" fill="#f59e0b" stroke="#78350f" stroke-width="2"/>
         <g class="anim-blink">
-          <path d="M35 58 Q42 52 48 58" stroke="#451a03" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <circle cx="42" cy="59" r="1.8" fill="#451a03"/>
-          <path d="M54 58 Q60 52 67 58" stroke="#451a03" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <circle cx="60" cy="59" r="1.8" fill="#451a03"/>
+          <path d="M35 56 Q42 50 48 56" stroke="#451a03" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <path d="M54 56 Q60 50 67 56" stroke="#451a03" stroke-width="2.2" stroke-linecap="round" fill="none"/>
         </g>
-        <!-- Sonrisa pilla con dos pequeños colmillos -->
-        <path d="M38 68 Q50 78 64 68" stroke="#451a03" stroke-width="2" fill="none"/>
-        <polygon points="44,70 47,75 50,71" fill="#ffffff" stroke="#451a03" stroke-width="1"/>
-        <polygon points="52,71 55,75 58,70" fill="#ffffff" stroke="#451a03" stroke-width="1"/>
+        <path d="M38 66 Q50 75 64 66" stroke="#451a03" stroke-width="2" fill="none"/>
+        <polygon points="44,68 47,73 50,69" fill="#ffffff"/>
+        <polygon points="52,69 55,73 58,68" fill="#ffffff"/>
       </g>
     `
   },
   7: {
     name: 'Pelusa Dorada',
-    color1: '#a16207',
-    color2: '#fde047',
-    numColor: '#facc15',
-    copies: 9,
+    bg: 'linear-gradient(135deg, #fde047, #a16207)',
+    borderColor: '#fef08a',
+    textColor: '#a16207',
     renderMonster: () => `
       <g class="pelusa-monster m-7">
-        <!-- Cuerpo fantasmita alegre -->
-        <path d="M30 86 Q26 62 36 46 Q46 36 56 36 Q68 36 74 48 Q80 62 76 86 Q66 84 54 88 Q40 84 30 86 Z" fill="#eab308" stroke="#713f12" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Brazo saludando con animación continua -->
-        <g class="anim-wave-arm" transform-origin="72 58">
-          <path d="M72 58 Q85 48 88 38 Q84 34 78 44 Z" fill="#facc15" stroke="#713f12" stroke-width="2"/>
-          <circle cx="86" cy="38" r="4" fill="#fde047"/>
+        <path d="M30 84 Q26 62 36 46 Q46 36 56 36 Q68 36 74 48 Q80 62 76 84 Q66 82 54 86 Q40 82 30 84 Z" fill="#eab308" stroke="#713f12" stroke-width="2"/>
+        <g class="anim-wave-arm" transform-origin="72 56">
+          <path d="M72 56 Q85 46 88 36 Q84 32 78 42 Z" fill="#facc15" stroke="#713f12" stroke-width="1.8"/>
         </g>
-        <!-- Ojos alegres -->
         <g class="anim-blink">
-          <ellipse cx="43" cy="52" rx="7" ry="8" fill="#ffffff" stroke="#713f12" stroke-width="2"/>
-          <circle cx="45" cy="52" r="3.2" fill="#0f172a"/>
-          <circle cx="47" cy="50" r="1.2" fill="#ffffff"/>
-          <ellipse cx="61" cy="52" rx="7" ry="8" fill="#ffffff" stroke="#713f12" stroke-width="2"/>
-          <circle cx="63" cy="52" r="3.2" fill="#0f172a"/>
-          <circle cx="65" cy="50" r="1.2" fill="#ffffff"/>
+          <ellipse cx="43" cy="50" rx="6.5" ry="7.5" fill="#ffffff" stroke="#713f12" stroke-width="1.8"/>
+          <circle cx="45" cy="50" r="3" fill="#0f172a"/>
+          <ellipse cx="61" cy="50" rx="6.5" ry="7.5" fill="#ffffff" stroke="#713f12" stroke-width="1.8"/>
+          <circle cx="63" cy="50" r="3" fill="#0f172a"/>
         </g>
-        <!-- Boca contenta sacando la lengua -->
-        <path d="M42 66 Q52 74 62 66" stroke="#713f12" stroke-width="2" fill="none"/>
-        <path d="M49 68 Q52 76 57 73 Q58 68 55 68 Z" fill="#f43f5e" stroke="#9f1239" stroke-width="1.2"/>
+        <path d="M42 64 Q52 72 62 64" stroke="#713f12" stroke-width="2" fill="none"/>
+        <path d="M49 66 Q52 74 57 71 Q58 66 55 66 Z" fill="#f43f5e"/>
       </g>
     `
   },
   8: {
     name: 'Pelusa Índigo',
-    color1: '#312e81',
-    color2: '#6366f1',
-    numColor: '#818cf8',
-    copies: 9,
+    bg: 'linear-gradient(135deg, #6366f1, #312e81)',
+    borderColor: '#c7d2fe',
+    textColor: '#312e81',
     renderMonster: () => `
       <g class="pelusa-monster m-8">
-        <!-- Cuerpo alargado vertical misterioso -->
-        <path d="M30 88 Q28 55 35 40 Q45 32 55 32 Q67 32 73 44 Q76 60 74 88 Q50 92 30 88 Z" fill="#3730a3" stroke="#1e1b4b" stroke-width="2.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Mechones sombríos en la base -->
-        <path d="M26 86 Q35 78 45 88 Q55 80 65 88 Q72 82 78 86" fill="none" stroke="#1e1b4b" stroke-width="2"/>
-        <!-- Único OJO central misterioso -->
+        <path d="M30 86 Q28 55 35 40 Q45 32 55 32 Q67 32 73 44 Q76 60 74 86 Q50 90 30 86 Z" fill="#3730a3" stroke="#1e1b4b" stroke-width="2"/>
         <g class="anim-blink">
-          <ellipse cx="52" cy="54" rx="12" ry="10" fill="#ffffff" stroke="#1e1b4b" stroke-width="2.5"/>
+          <ellipse cx="52" cy="52" rx="11" ry="9" fill="#ffffff" stroke="#1e1b4b" stroke-width="2"/>
           <g class="anim-look-around">
-            <circle cx="52" cy="54" r="5.5" fill="#4338ca"/>
-            <circle cx="52" cy="54" r="3" fill="#030712"/>
-            <circle cx="54" cy="52" r="1.5" fill="#38bdf8"/>
+            <circle cx="52" cy="52" r="5" fill="#4338ca"/>
+            <circle cx="52" cy="52" r="2.8" fill="#030712"/>
+            <circle cx="54" cy="50" r="1.2" fill="#38bdf8"/>
           </g>
         </g>
-        <!-- Boca sutil enigmática -->
-        <path d="M47 72 Q52 70 57 72" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round"/>
+        <path d="M47 70 Q52 68 57 70" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round"/>
       </g>
     `
   },
   9: {
     name: 'Pelusa Esmeralda',
-    color1: '#115e59',
-    color2: '#2dd4bf',
-    numColor: '#2dd4bf',
-    copies: 9,
+    bg: 'linear-gradient(135deg, #2dd4bf, #115e59)',
+    borderColor: '#ccfbf1',
+    textColor: '#115e59',
     renderMonster: () => `
       <g class="pelusa-monster m-9">
-        <!-- Criatura peluda estilo gatito suave -->
-        <ellipse cx="50" cy="68" rx="27" ry="22" fill="#0d9488" stroke="#134e4a" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Orejitas peludas -->
-        <polygon points="32,48 24,36 38,40" fill="#14b8a6" stroke="#134e4a" stroke-width="1.5"/>
-        <polygon points="68,48 76,36 62,40" fill="#14b8a6" stroke="#134e4a" stroke-width="1.5"/>
-        <!-- Ojos anime súper brillantes y tiernos -->
+        <ellipse cx="50" cy="65" rx="26" ry="20" fill="#0d9488" stroke="#134e4a" stroke-width="2"/>
+        <polygon points="32,46 24,34 38,38" fill="#14b8a6"/>
+        <polygon points="68,46 76,34 62,38" fill="#14b8a6"/>
         <g class="anim-blink">
-          <circle cx="41" cy="56" r="9" fill="#042f2e" stroke="#134e4a" stroke-width="1.5"/>
-          <circle cx="41" cy="56" r="8" fill="#facc15"/>
-          <circle cx="41" cy="56" r="5" fill="#0f172a"/>
-          <circle cx="39" cy="53" r="2.8" fill="#ffffff"/>
-          <circle cx="43" cy="58" r="1.3" fill="#ffffff"/>
-
-          <circle cx="61" cy="56" r="9" fill="#042f2e" stroke="#134e4a" stroke-width="1.5"/>
-          <circle cx="61" cy="56" r="8" fill="#facc15"/>
-          <circle cx="61" cy="56" r="5" fill="#0f172a"/>
-          <circle cx="59" cy="53" r="2.8" fill="#ffffff"/>
-          <circle cx="63" cy="58" r="1.3" fill="#ffffff"/>
+          <circle cx="41" cy="54" r="8" fill="#042f2e"/>
+          <circle cx="41" cy="54" r="7" fill="#facc15"/>
+          <circle cx="41" cy="54" r="4.5" fill="#0f172a"/>
+          <circle cx="39" cy="51" r="2.4" fill="#ffffff"/>
+          <circle cx="61" cy="54" r="8" fill="#042f2e"/>
+          <circle cx="61" cy="54" r="7" fill="#facc15"/>
+          <circle cx="61" cy="54" r="4.5" fill="#0f172a"/>
+          <circle cx="59" cy="51" r="2.4" fill="#ffffff"/>
         </g>
-        <!-- Boquita estilo :3 tierna -->
-        <path d="M44 68 Q47 72 50 69 Q53 72 56 68" stroke="#042f2e" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M44 66 Q47 70 50 67 Q53 70 56 66" stroke="#042f2e" stroke-width="2" stroke-linecap="round" fill="none"/>
       </g>
     `
   },
   10: {
     name: 'Pelusa Fiesta Rosa',
-    color1: '#9d174d',
-    color2: '#f43f5e',
-    numColor: '#fb7185',
-    copies: 9,
+    bg: 'linear-gradient(135deg, #f43f5e, #9d174d)',
+    borderColor: '#ffe4e6',
+    textColor: '#9d174d',
     renderMonster: () => `
       <g class="pelusa-monster m-10 anim-jump-happy">
-        <!-- Cuerpo eufórico de celebración -->
-        <path d="M28 88 Q22 66 32 50 Q42 40 55 40 Q68 40 76 52 Q82 68 76 88 Q50 92 28 88 Z" fill="#db2777" stroke="#831843" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
-        <!-- Brazos levantados arriba festejando -->
+        <path d="M28 86 Q22 66 32 50 Q42 40 55 40 Q68 40 76 52 Q82 68 76 86 Q50 90 28 86 Z" fill="#db2777" stroke="#831843" stroke-width="2"/>
         <g class="anim-cheer-arms">
-          <path d="M28 54 Q18 42 16 28 Q22 28 30 42 Z" fill="#f43f5e" stroke="#831843" stroke-width="2"/>
-          <circle cx="17" cy="27" r="4" fill="#fb7185"/>
-          <path d="M74 54 Q84 42 86 28 Q80 28 72 42 Z" fill="#f43f5e" stroke="#831843" stroke-width="2"/>
-          <circle cx="85" cy="27" r="4" fill="#fb7185"/>
+          <path d="M28 54 Q18 42 16 28 Q22 28 30 42 Z" fill="#f43f5e" stroke="#831843" stroke-width="1.8"/>
+          <circle cx="17" cy="27" r="3.5" fill="#fb7185"/>
+          <path d="M74 54 Q84 42 86 28 Q80 28 72 42 Z" fill="#f43f5e" stroke="#831843" stroke-width="1.8"/>
+          <circle cx="85" cy="27" r="3.5" fill="#fb7185"/>
         </g>
-        <!-- Ojos súper felices -->
         <g class="anim-blink">
-          <circle cx="42" cy="52" r="7.5" fill="#ffffff" stroke="#831843" stroke-width="2"/>
-          <circle cx="43" cy="52" r="3.2" fill="#0f172a"/>
-          <circle cx="45" cy="50" r="1.3" fill="#ffffff"/>
-          <circle cx="62" cy="52" r="7.5" fill="#ffffff" stroke="#831843" stroke-width="2"/>
-          <circle cx="63" cy="52" r="3.2" fill="#0f172a"/>
-          <circle cx="65" cy="50" r="1.3" fill="#ffffff"/>
+          <circle cx="42" cy="50" r="7" fill="#ffffff" stroke="#831843" stroke-width="1.8"/>
+          <circle cx="43" cy="50" r="3" fill="#0f172a"/>
+          <circle cx="62" cy="50" r="7" fill="#ffffff" stroke="#831843" stroke-width="1.8"/>
+          <circle cx="63" cy="50" r="3" fill="#0f172a"/>
         </g>
-        <!-- Boca gigante feliz cantando ¡10! -->
-        <path d="M38 64 Q52 82 66 64 Z" fill="#500724" stroke="#831843" stroke-width="2"/>
-        <path d="M46 72 Q52 76 58 72" fill="#fb7185"/>
+        <path d="M38 62 Q52 78 66 62 Z" fill="#500724" stroke="#831843" stroke-width="1.8"/>
       </g>
     `
   }
 };
 
 /**
- * Genera el HTML de una carta de Pelusas
- * @param {number} value Número de la carta (1 al 10)
- * @param {object} options Opciones de presentación { size: 'normal'|'small'|'large', isClickable: boolean, badge: string|number }
+ * Renderiza la carta completa con fondo sólido y borde visible garantizado
  */
 function renderPelusaCard(value, options = {}) {
   const data = PELUSAS_DATA[value] || PELUSAS_DATA[1];
   const sizeClass = options.size || 'normal';
-  const clickableClass = options.isClickable ? 'clickable' : '';
+  const isClickable = options.isClickable;
+  const extraAttrs = options.attrs || '';
   const badgeHtml = options.badge !== undefined && options.badge !== null 
     ? `<div class="card-count-badge">x${options.badge}</div>` 
     : '';
 
-  // Medidas de seguridad inline para evitar que el SVG crezca sin límite si el CSS se retrasa
-  let inlineSizeStyle = 'max-width: 90px; width: 100%;';
-  if (sizeClass === 'tiny') inlineSizeStyle = 'max-width: 38px; width: 38px;';
-  else if (sizeClass === 'avatar') inlineSizeStyle = 'max-width: 60px; width: 100%; margin: 0 auto;';
-  else if (sizeClass === 'mini') inlineSizeStyle = 'max-width: 46px; width: 46px;';
-  else if (sizeClass === 'medium') inlineSizeStyle = 'max-width: 76px; width: 76px;';
-  else if (sizeClass === 'large') inlineSizeStyle = 'max-width: 120px; width: 120px;';
+  let widthPx = 76;
+  if (sizeClass === 'tiny') widthPx = 34;
+  else if (sizeClass === 'avatar') widthPx = 52;
+  else if (sizeClass === 'mini') widthPx = 44;
+  else if (sizeClass === 'medium') widthPx = 68;
+  else if (sizeClass === 'large') widthPx = 100;
 
   return `
-    <div class="pelusa-card-wrapper card-val-${value} ${sizeClass} ${clickableClass}" data-value="${value}" style="${inlineSizeStyle} display: inline-block; position: relative;">
-      <svg class="pelusa-card-svg" viewBox="0 0 100 145" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; display: block;">
-        <defs>
-          <linearGradient id="grad_${value}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="${data.color2}" />
-            <stop offset="100%" stop-color="${data.color1}" />
-          </linearGradient>
-          <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.3"/>
-          </filter>
-        </defs>
+    <div class="pelusa-card-wrapper card-val-${value} ${sizeClass} ${isClickable ? 'clickable' : ''}" 
+         data-value="${value}" 
+         ${extraAttrs}
+         style="width: ${widthPx}px; aspect-ratio: 100/145; background: ${data.bg}; border: 2px solid #ffffff; border-radius: 9px; box-shadow: 0 4px 10px rgba(0,0,0,0.35); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: ${isClickable ? 'pointer' : 'default'};">
+      
+      <!-- Número grande de pegatina en la parte superior -->
+      <div class="card-num-sticker" style="position: absolute; top: 3px; left: 0; right: 0; text-align: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: ${sizeClass === 'tiny' || sizeClass === 'mini' ? '14px' : '22px'}; line-height: 1; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 2px #000;">
+        ${value}
+      </div>
 
-        <!-- Fondo de la carta con textura suave -->
-        <rect x="3" y="3" width="94" height="139" rx="10" fill="url(#grad_${value})" stroke="#ffffff" stroke-width="2.5" filter="url(#card-shadow)"/>
-        
-        <!-- Textura de manchas / polvo tenue -->
-        <g opacity="0.15" fill="#ffffff">
-          <circle cx="20" cy="30" r="14"/>
-          <circle cx="80" cy="40" r="18"/>
-          <circle cx="25" cy="115" r="16"/>
-          <circle cx="75" cy="120" r="20"/>
-        </g>
-
-        <!-- Número estilizado con borde de pegatina blanca idéntico a las cartas reales -->
-        <g class="card-number-sticker">
-          <text x="50" y="34" text-anchor="middle" font-family="'Outfit', sans-serif" font-weight="900" font-size="${value === 10 ? '30' : '34'}" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round">${value}</text>
-          <text x="50" y="34" text-anchor="middle" font-family="'Outfit', sans-serif" font-weight="900" font-size="${value === 10 ? '30' : '34'}" fill="${data.color1}">${value}</text>
-        </g>
-
-        <!-- Monstrito ilustrado y animado -->
-        <g transform="translate(0, 32)">
-          ${data.renderMonster()}
-        </g>
+      <!-- SVG del monstrito -->
+      <svg class="pelusa-card-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 85%; height: auto; margin-top: 18%; display: block; overflow: visible;">
+        ${data.renderMonster()}
       </svg>
       ${badgeHtml}
     </div>
