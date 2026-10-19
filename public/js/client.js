@@ -16,6 +16,12 @@ let myPlayerId = null;
 let currentRoom = null;
 let selectedAvatar = 1;
 
+// Variables para animación FLIP y revelación de cartas
+let previousTurnCards = [];
+let previousTurnIndex = null;
+let isAnimatingCard = false;
+let isFirstGameRender = true;
+
 // Elementos DOM
 const screenLobby = document.getElementById('screen-lobby');
 const screenGame = document.getElementById('screen-game');
@@ -278,8 +284,8 @@ function renderGame(state) {
     myExposedCount.innerText = me.exposedCards.length;
   }
 
-  // Cartas del turno
-  renderTurnCards(state.turnState.drawnThisTurn);
+  // Cartas del turno con animación FLIP & Hero
+  renderTurnCards(state.turnState.drawnThisTurn, state.turnState.lastDrawnCard, state.turnState.isBusted, state.currentTurnIndex);
 
   // Contador de números diferentes
   const uniqueNumbers = new Set(state.turnState.drawnThisTurn.map(c => c.value));
@@ -297,9 +303,11 @@ function renderGame(state) {
     if (arenaHint) arenaHint.style.display = 'block';
   }
 
-  // Botones de acción
-  btnDrawCard.disabled = !isMyTurn || state.deckCount === 0 || state.turnState.isBusted;
-  btnStopTurn.disabled = !isMyTurn || !state.turnState.canStop || state.turnState.isBusted;
+  // Botones de acción (respetando animación de vuelo de carta)
+  if (!isAnimatingCard) {
+    btnDrawCard.disabled = !isMyTurn || state.deckCount === 0 || state.turnState.isBusted;
+    btnStopTurn.disabled = !isMyTurn || !state.turnState.canStop || state.turnState.isBusted;
+  }
 
   if (isMyTurn && uniqueCount >= 3) {
     btnDrawCard.classList.add('btn-risk');
@@ -382,9 +390,9 @@ window.handleStealCard = function(targetId, value) {
   socket.emit('steal_cards', { targetId, value });
 };
 
-function renderTurnCards(cards) {
+function renderTurnCardsStatic(cards) {
   turnDrawnCards.innerHTML = '';
-  if (cards.length === 0) {
+  if (!cards || cards.length === 0) {
     turnDrawnCards.innerHTML = '<div class="empty-turn-notice">Roba tu primera carta del montón central...</div>';
     return;
   }
@@ -396,11 +404,262 @@ function renderTurnCards(cards) {
 
   const uniqueVals = Object.keys(groups).sort((a,b) => a - b);
   uniqueVals.forEach(v => {
+    const cardVal = Number(v);
     const cardWrapper = document.createElement('div');
     cardWrapper.className = 'turn-card-stack';
-    cardWrapper.innerHTML = renderPelusaCard(Number(v), { size: 'medium', badge: groups[v] });
+    cardWrapper.setAttribute('data-value', cardVal);
+    cardWrapper.innerHTML = renderPelusaCard(cardVal, { size: 'medium', badge: groups[v] });
     turnDrawnCards.appendChild(cardWrapper);
   });
+}
+
+function renderTurnCards(cards, lastDrawnCard, isBusted, turnIndex) {
+  // Si cambió el turno a otro jugador, resetear historial
+  if (previousTurnIndex !== turnIndex) {
+    previousTurnIndex = turnIndex;
+    previousTurnCards = [];
+  }
+
+  // Si es la primera vez que se renderiza el juego (recarga o entrada directa), renderizar sin animación
+  if (isFirstGameRender) {
+    isFirstGameRender = false;
+    previousTurnCards = [...(cards || [])];
+    renderTurnCardsStatic(cards);
+    return;
+  }
+
+  // Caso: CORRIENTE DE AIRE (Busted)
+  if (isBusted && lastDrawnCard) {
+    previousTurnCards = [];
+    isAnimatingCard = true;
+    btnDrawCard.disabled = true;
+    btnStopTurn.disabled = true;
+
+    // Mostrar la carta repetida culpable grande en el centro con aura roja
+    const deckPileEl = document.getElementById('deck-pile');
+    const deckRect = deckPileEl ? deckPileEl.getBoundingClientRect() : { left: window.innerWidth / 2 - 40, top: 100, width: 80, height: 112 };
+
+    const bustClone = document.createElement('div');
+    bustClone.className = 'flying-card-clone bust-reveal-card';
+    bustClone.innerHTML = renderPelusaCard(lastDrawnCard.value, { size: 'large' });
+    bustClone.style.position = 'fixed';
+    bustClone.style.left = `${window.innerWidth / 2 - 50}px`;
+    bustClone.style.top = `${deckRect.bottom + 15}px`;
+    bustClone.style.transform = 'scale(1.4)';
+    bustClone.style.zIndex = '1000';
+    bustClone.style.border = '2px solid #ef4444';
+    document.body.appendChild(bustClone);
+
+    // Viento que barre las cartas
+    turnDrawnCards.querySelectorAll('.turn-card-stack').forEach(el => {
+      el.classList.add('card-wind-bust');
+    });
+
+    setTimeout(() => {
+      bustClone.classList.add('card-wind-bust');
+      setTimeout(() => {
+        bustClone.remove();
+        turnDrawnCards.innerHTML = '<div class="empty-turn-notice">💨 ¡Corriente de aire! Cartas perdidas</div>';
+        isAnimatingCard = false;
+      }, 700);
+    }, 600);
+
+    return;
+  }
+
+  // Si no hay cartas
+  if (!cards || cards.length === 0) {
+    previousTurnCards = [];
+    renderTurnCardsStatic(cards);
+    return;
+  }
+
+  // Detectar si se ha sacado una nueva carta en este turno
+  const isNewCardDrawn = cards.length === previousTurnCards.length + 1 && lastDrawnCard;
+
+  if (!isNewCardDrawn) {
+    previousTurnCards = [...cards];
+    renderTurnCardsStatic(cards);
+    return;
+  }
+
+  const newCardVal = Number(lastDrawnCard.value);
+  const wasAlreadyPresent = previousTurnCards.some(c => c.value === newCardVal);
+  previousTurnCards = [...cards];
+
+  // =========================================================================
+  // CASO A: NUEVO NÚMERO DIFERENTE (Animación FLIP: cartas se abren y la nueva entra grande)
+  // =========================================================================
+  if (!wasAlreadyPresent) {
+    // 1. Guardar posiciones actuales de las cartas existentes
+    const oldPositions = {};
+    turnDrawnCards.querySelectorAll('.turn-card-stack').forEach(el => {
+      const v = el.getAttribute('data-value');
+      if (v) oldPositions[v] = el.getBoundingClientRect();
+    });
+
+    // 2. Renderizar todas las cartas ordenadas (incluida la nueva)
+    const groups = {};
+    cards.forEach(c => { groups[c.value] = (groups[c.value] || 0) + 1; });
+    const uniqueVals = Object.keys(groups).sort((a,b) => a - b);
+
+    turnDrawnCards.innerHTML = '';
+    const newElements = {};
+
+    uniqueVals.forEach(v => {
+      const cardVal = Number(v);
+      const cardWrapper = document.createElement('div');
+      cardWrapper.className = 'turn-card-stack';
+      cardWrapper.setAttribute('data-value', cardVal);
+      cardWrapper.innerHTML = renderPelusaCard(cardVal, { size: 'medium', badge: groups[v] });
+      if (cardVal === newCardVal) {
+        cardWrapper.classList.add('new-card-entering');
+      }
+      turnDrawnCards.appendChild(cardWrapper);
+      newElements[cardVal] = cardWrapper;
+    });
+
+    // 3. Medir nuevas posiciones
+    const newPositions = {};
+    Object.keys(newElements).forEach(v => {
+      newPositions[v] = newElements[v].getBoundingClientRect();
+    });
+
+    // 4. Invertir las cartas existentes (mantenerlas visualmente donde estaban antes)
+    Object.keys(oldPositions).forEach(v => {
+      if (oldPositions[v] && newPositions[v] && newElements[v]) {
+        const deltaX = oldPositions[v].left - newPositions[v].left;
+        if (Math.abs(deltaX) > 0.5) {
+          newElements[v].style.transform = `translateX(${deltaX}px)`;
+          newElements[v].style.transition = 'none';
+        }
+      }
+    });
+
+    // 5. Invertir la NUEVA carta (comienza grande en el mazo central)
+    const deckPileEl = document.getElementById('deck-pile');
+    const deckRect = deckPileEl ? deckPileEl.getBoundingClientRect() : { left: window.innerWidth / 2 - 40, top: 100, width: 80, height: 112 };
+    const targetEl = newElements[newCardVal];
+    const targetRect = newPositions[newCardVal];
+
+    if (targetEl && targetRect) {
+      const deltaX = (deckRect.left + deckRect.width / 2) - (targetRect.left + targetRect.width / 2);
+      const deltaY = (deckRect.top + deckRect.height / 2) - (targetRect.top + targetRect.height / 2);
+
+      targetEl.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.42)`;
+      targetEl.style.zIndex = '60';
+      targetEl.style.boxShadow = '0 14px 35px rgba(0, 0, 0, 0.75), 0 0 30px rgba(56, 189, 248, 0.95)';
+      targetEl.style.transition = 'none';
+    }
+
+    // Forzar reflow en el navegador
+    void turnDrawnCards.offsetWidth;
+
+    isAnimatingCard = true;
+    btnDrawCard.disabled = true;
+    btnStopTurn.disabled = true;
+
+    // 6. Ejecutar la animación: después de 200ms de verse grande en el mazo, se desliza al hueco
+    setTimeout(() => {
+      // Las demás cartas se deslizan suavemente abriendo el espacio ordenado
+      Object.keys(oldPositions).forEach(v => {
+        const el = newElements[v];
+        if (el) {
+          el.style.transition = 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)';
+          el.style.transform = 'translateX(0)';
+        }
+      });
+
+      // La nueva carta viaja hacia su hueco y adopta su tamaño normal
+      if (targetEl) {
+        targetEl.style.transition = 'transform 0.52s cubic-bezier(0.34, 1.25, 0.64, 1), box-shadow 0.4s ease';
+        targetEl.style.transform = 'translate(0, 0) scale(1)';
+        targetEl.style.boxShadow = '';
+      }
+
+      // Al aterrizar (550ms después)
+      setTimeout(() => {
+        sounds.playPlace();
+        if (targetEl) {
+          targetEl.style.transition = '';
+          targetEl.style.transform = '';
+          targetEl.style.zIndex = '';
+          targetEl.style.boxShadow = '';
+          targetEl.classList.remove('new-card-entering');
+        }
+        Object.keys(oldPositions).forEach(v => {
+          const el = newElements[v];
+          if (el) {
+            el.style.transition = '';
+            el.style.transform = '';
+          }
+        });
+
+        isAnimatingCard = false;
+        syncActionButtons();
+      }, 550);
+    }, 200);
+
+    return;
+  }
+
+  // =========================================================================
+  // CASO B: CARTA REPETIDA QUE SUMA A UNA PILA (x2, x3...)
+  // =========================================================================
+  renderTurnCardsStatic(cards);
+  const targetStack = turnDrawnCards.querySelector(`.turn-card-stack[data-value="${newCardVal}"]`);
+  if (targetStack) {
+    const targetRect = targetStack.getBoundingClientRect();
+    const deckPileEl = document.getElementById('deck-pile');
+    const deckRect = deckPileEl ? deckPileEl.getBoundingClientRect() : { left: window.innerWidth / 2 - 40, top: 100, width: 80, height: 112 };
+
+    // Crear clon volador que aparece grande en el mazo
+    const clone = document.createElement('div');
+    clone.className = 'flying-card-clone';
+    clone.innerHTML = renderPelusaCard(newCardVal, { size: 'medium' });
+    clone.style.position = 'fixed';
+    clone.style.left = `${deckRect.left}px`;
+    clone.style.top = `${deckRect.top}px`;
+    clone.style.width = `${targetRect.width}px`;
+    clone.style.transform = 'scale(1.42)';
+    clone.style.zIndex = '1000';
+    clone.style.transition = 'none';
+    document.body.appendChild(clone);
+
+    isAnimatingCard = true;
+    btnDrawCard.disabled = true;
+    btnStopTurn.disabled = true;
+
+    setTimeout(() => {
+      clone.style.transition = 'all 0.48s cubic-bezier(0.34, 1.25, 0.64, 1)';
+      clone.style.left = `${targetRect.left}px`;
+      clone.style.top = `${targetRect.top}px`;
+      clone.style.transform = 'scale(1)';
+
+      setTimeout(() => {
+        clone.remove();
+        sounds.playPlace();
+        targetStack.classList.add('card-bump-merge');
+        const badge = targetStack.querySelector('.card-count-badge');
+        if (badge) badge.classList.add('badge-pop-in');
+
+        setTimeout(() => {
+          targetStack.classList.remove('card-bump-merge');
+          isAnimatingCard = false;
+          syncActionButtons();
+        }, 400);
+      }, 480);
+    }, 200);
+  }
+}
+
+function syncActionButtons() {
+  if (!currentRoom) return;
+  const isMyTurn = currentRoom.isMyTurn;
+  const canStop = currentRoom.turnState ? currentRoom.turnState.canStop : false;
+  const isBusted = currentRoom.turnState ? currentRoom.turnState.isBusted : false;
+  btnDrawCard.disabled = !isMyTurn || currentRoom.deckCount === 0 || isBusted || isAnimatingCard;
+  btnStopTurn.disabled = !isMyTurn || !canStop || isBusted || isAnimatingCard;
 }
 
 function renderLogs(logs) {
@@ -413,16 +672,19 @@ function renderLogs(logs) {
 }
 
 btnDrawCard.onclick = () => {
+  if (isAnimatingCard) return;
   socket.emit('draw_card');
 };
 
 deckPile.onclick = () => {
+  if (isAnimatingCard) return;
   if (!btnDrawCard.disabled) {
     socket.emit('draw_card');
   }
 };
 
 btnStopTurn.onclick = () => {
+  if (isAnimatingCard) return;
   socket.emit('stop_turn');
 };
 

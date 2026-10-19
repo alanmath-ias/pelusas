@@ -44,6 +44,29 @@ class SoundEffects {
     osc.stop(this.ctx.currentTime + 0.08);
   }
 
+  // Sonido suave de asentamiento cuando la carta aterriza en su posición ordenada
+  playPlace() {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(580, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(320, this.ctx.currentTime + 0.09);
+
+    gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.09);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.09);
+  }
+
   // Sonido de robo a otro jugador ("¡Yoink!" agudo y divertido)
   playSteal() {
     if (this.muted) return;
