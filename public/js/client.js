@@ -459,7 +459,7 @@ function renderTurnCards(cards, lastDrawnCard, isBusted, turnIndex) {
       bustClone.classList.add('card-wind-bust');
       setTimeout(() => {
         bustClone.remove();
-        turnDrawnCards.innerHTML = '<div class="empty-turn-notice">💨 ¡Corriente de aire! Cartas perdidas</div>';
+        turnDrawnCards.innerHTML = '<div class="empty-turn-notice">💨 ¡Corriente de aire! Cartas devueltas al montón</div>';
         isAnimatingCard = false;
       }, 700);
     }, 600);

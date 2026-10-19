@@ -705,14 +705,14 @@ input[type="text"]:focus {
     transform: translate(0, 0) rotate(0deg) scale(1);
     opacity: 1;
   }
-  45% {
-    transform: translate(35px, -35px) rotate(18deg) scale(0.85);
-    opacity: 0.8;
+  40% {
+    transform: translate(0px, -45px) rotate(8deg) scale(0.85);
+    opacity: 0.85;
   }
   100% {
-    transform: translate(90px, -90px) rotate(40deg) scale(0.2);
+    transform: translate(0px, -110px) rotate(-12deg) scale(0.25);
     opacity: 0;
-    filter: blur(8px);
+    filter: blur(5px);
   }
 }
 
