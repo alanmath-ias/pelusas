@@ -286,13 +286,15 @@ function renderGame(state) {
   const uniqueCount = uniqueNumbers.size;
   uniqueCounterText.innerText = `${uniqueCount} / 3`;
 
-  // Alerta de riesgo (cuando ya tiene 3 o más diferentes)
+  // Alerta de riesgo (colocada al lado derecho del mazo)
+  const arenaHint = document.getElementById('arena-hint');
   if (uniqueCount >= 3) {
     riskWarning.style.display = 'block';
-    riskWarning.className = 'risk-alert';
-    riskWarning.innerHTML = '⚠️ <strong>¡ZONA DE RIESGO!</strong> Si sacas un número repetido, perderás todas tus cartas de este turno.';
+    riskWarning.innerHTML = '⚠️ ¡Riesgo! Repetir = perder';
+    if (arenaHint) arenaHint.style.display = 'none';
   } else {
     riskWarning.style.display = 'none';
+    if (arenaHint) arenaHint.style.display = 'block';
   }
 
   // Botones de acción

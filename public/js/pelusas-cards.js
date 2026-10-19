@@ -230,17 +230,18 @@ function renderPelusaCard(value, options = {}) {
   const sizeClass = options.size || 'normal';
   const isClickable = options.isClickable;
   const extraAttrs = options.attrs || '';
-  const badgeHtml = options.badge !== undefined && options.badge !== null 
+  // Solo mostrar la nube si hay MÁS de 1 carta (x2, x3...), evitando tapar con x1
+  const badgeHtml = (options.badge !== undefined && options.badge !== null && Number(options.badge) > 1) 
     ? `<div class="card-count-badge">x${options.badge}</div>` 
     : '';
 
-  let widthPx = 72;
-  let numFontSize = '20px';
+  let widthPx = 80;
+  let numFontSize = '22px';
   if (sizeClass === 'tiny') { widthPx = 28; numFontSize = '11px'; }
   else if (sizeClass === 'avatar') { widthPx = 34; numFontSize = '13px'; }
   else if (sizeClass === 'mini') { widthPx = 38; numFontSize = '14px'; }
-  else if (sizeClass === 'medium') { widthPx = 64; numFontSize = '18px'; }
-  else if (sizeClass === 'large') { widthPx = 95; numFontSize = '24px'; }
+  else if (sizeClass === 'medium') { widthPx = 82; numFontSize = '22px'; }
+  else if (sizeClass === 'large') { widthPx = 100; numFontSize = '26px'; }
 
   return `
     <div class="pelusa-card-wrapper card-val-${value} ${sizeClass} ${isClickable ? 'clickable' : ''}" 

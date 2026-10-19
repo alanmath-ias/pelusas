@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=2.3">
+  <link rel="stylesheet" href="/css/style.css?v=2.4">
 </head>
 <body>
   <!-- Fondos dinámicos luminosos -->
@@ -108,44 +108,53 @@
 
     <!-- Mesa Central -->
     <main class="game-table">
-      <!-- Mazo central: Montón de Polvo -->
-      <div class="deck-zone">
-        <div id="deck-pile" class="deck-pile" title="Toca para robar una carta">
-          <div class="deck-inner">
-            <div class="deck-label">MONTÓN DE POLVO</div>
-            <div class="deck-icon">🃏</div>
-            <div id="deck-counter" class="deck-counter">110 / 110</div>
-          </div>
-          <div class="deck-card-layer layer-1"></div>
-          <div class="deck-card-layer layer-2"></div>
-        </div>
-      </div>
-
-      <!-- Área de jugada del turno activo -->
-      <div class="turn-play-zone">
-        <div class="turn-stats-bar">
+      <!-- Fila superior de la arena: Avisos a los lados y Mazo en el centro -->
+      <div class="arena-deck-row">
+        <!-- Lado izquierdo: Contador de números diferentes -->
+        <div class="arena-side-left">
           <div class="stat-bubble">
-            <span class="stat-label">Números diferentes en este turno:</span>
+            <span class="stat-label">Diferentes:</span>
             <span id="unique-counter-text" class="stat-val">0 / 3</span>
           </div>
         </div>
 
-        <div id="risk-warning" class="risk-alert" style="display: none;"></div>
+        <!-- Centro: Montón de Polvo -->
+        <div class="deck-zone">
+          <div id="deck-pile" class="deck-pile" title="Toca para robar una carta">
+            <div class="deck-inner">
+              <div class="deck-label">MONTÓN DE POLVO</div>
+              <div class="deck-icon">🃏</div>
+              <div id="deck-counter" class="deck-counter">110 / 110</div>
+            </div>
+            <div class="deck-card-layer layer-1"></div>
+            <div class="deck-card-layer layer-2"></div>
+          </div>
+        </div>
 
-        <!-- Cartas robadas en este turno -->
+        <!-- Lado derecho: Avisito de riesgo o pista -->
+        <div class="arena-side-right">
+          <div id="risk-warning" class="risk-alert" style="display: none;"></div>
+          <div id="arena-hint" class="arena-hint-bubble">
+            <span>Objetivo: ≥3 dif.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de cartas reveladas en el turno (Grande y protagonista) -->
+      <div class="arena-cards-zone">
         <div id="turn-drawn-cards" class="turn-cards-display">
           <!-- Cartas del turno actual -->
         </div>
+      </div>
 
-        <!-- Botones de acción del turno -->
-        <div class="turn-actions-bar">
-          <button id="btn-draw-card" class="btn btn-draw">
-            <span>🃏 Robar Pelusa</span>
-          </button>
-          <button id="btn-stop-turn" class="btn btn-stop" disabled>
-            <span>🛑 Plantarse (Guardar Turno)</span>
-          </button>
-        </div>
+      <!-- Botones de acción del turno -->
+      <div class="turn-actions-bar">
+        <button id="btn-draw-card" class="btn btn-draw">
+          <span>🃏 Robar Pelusa</span>
+        </button>
+        <button id="btn-stop-turn" class="btn btn-stop" disabled>
+          <span>🛑 Plantarse (Guardar Turno)</span>
+        </button>
       </div>
     </main>
 
@@ -206,8 +215,8 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/pelusas-cards.js?v=2.3"></script>
-  <script src="/js/audio.js?v=2.3"></script>
-  <script src="/js/client.js?v=2.3"></script>
+  <script src="/js/pelusas-cards.js?v=2.4"></script>
+  <script src="/js/audio.js?v=2.4"></script>
+  <script src="/js/client.js?v=2.4"></script>
 </body>
 </html>
