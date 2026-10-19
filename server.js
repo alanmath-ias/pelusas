@@ -180,7 +180,19 @@ io.on('connection', (socket) => {
       return socket.emit('error_msg', { message: res.error });
     }
 
-    broadcastRoom(room, 'cards_stolen', res);
+    const thief = room.players.find(p => p.id === socket.id);
+    const victim = room.players.find(p => p.id === targetId);
+
+    broadcastRoom(room, 'cards_stolen', {
+      ...res,
+      thiefId: socket.id,
+      thiefName: thief ? thief.name : 'Un rival',
+      thiefToken: thief ? thief.token : null,
+      targetId,
+      targetName: victim ? victim.name : 'un rival',
+      targetToken: victim ? victim.token : null,
+      value: Number(value)
+    });
   });
 
   // Plantarse (detener turno)

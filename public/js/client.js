@@ -261,6 +261,23 @@ socket.on('card_drawn', ({ card, busted, gameEnded }) => {
 
 socket.on('cards_stolen', (res) => {
   sounds.playSteal();
+
+  const isMeVictim = res.targetId === myPlayerId || (res.targetToken && res.targetToken === playerToken);
+  const isMeThief = res.thiefId === myPlayerId || (res.thiefToken && res.thiefToken === playerToken);
+
+  if (isMeVictim) {
+    triggerScreenShake();
+    showToastBanner(`🚨 ¡<strong>${escapeHtml(res.thiefName || 'Un rival')}</strong> te ha robado ${res.stolenCount > 1 ? res.stolenCount + ' cartas' : 'tu carta'} de valor <strong>${res.value}</strong>!`);
+
+    // Animación de flash en la carta robada
+    document.querySelectorAll(`.card-val-my-${res.value}, .card-val-target-${res.value}`).forEach(el => {
+      el.classList.add('card-stolen-flash');
+    });
+  } else if (isMeThief) {
+    showToastBanner(`😈 ¡Le robaste ${res.stolenCount > 1 ? res.stolenCount + ' cartas' : 'su carta'} de valor <strong>${res.value}</strong> a <strong>${escapeHtml(res.targetName || 'tu rival')}</strong>!`);
+  } else {
+    showToastBanner(`⚡ <strong>${escapeHtml(res.thiefName || 'Un jugador')}</strong> le robó a <strong>${escapeHtml(res.targetName || 'otro')}</strong> su Pelusa <strong>${res.value}</strong>`);
+  }
 });
 
 socket.on('turn_stopped', () => {
@@ -422,6 +439,7 @@ function renderGame(state) {
     mySafeScore.innerText = me.safeScore;
     mySafeCount.innerText = me.safeCount;
     myExposedCount.innerText = me.exposedCards.length;
+    renderMyDockExposedCards(me.exposedCards);
   }
 
   // Cartas del turno con animación FLIP & Hero
@@ -467,12 +485,10 @@ function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {
 
   players.forEach((p, idx) => {
     const isMe = p.id === myPlayerId || p.token === playerToken;
-    if (isMe) return;
-
     const isHisTurn = idx === activeTurnIndex;
     const card = document.createElement('div');
     card.id = `player-card-${p.id}`;
-    card.className = `opponent-box ${isHisTurn ? 'active-turn' : ''} ${!p.connected ? 'disconnected' : ''}`;
+    card.className = `opponent-box ${isMe ? 'is-me-box' : ''} ${isHisTurn ? 'active-turn' : ''} ${!p.connected ? 'disconnected' : ''}`;
 
     const exposedGroups = {};
     p.exposedCards.forEach(c => {
@@ -486,12 +502,12 @@ function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {
     } else {
       values.forEach(v => {
         const valNum = Number(v);
-        // La carta es robable si es mi turno y es el número que acabo de sacar
-        const isClickable = isMyTurn && validStealValue === valNum;
+        // La carta es robable si es mi turno, no es mi propia carta, y coincide con la sacada
+        const isClickable = isMyTurn && !isMe && validStealValue === valNum;
         exposedCardsHtml += `
-          <div class="stealable-card-target ${isClickable ? 'can-steal-touch' : ''}" 
-               onclick="handleStealCard('${p.id}', ${valNum})" 
-               title="${isClickable ? '¡Toca para robarle esta carta!' : ''}">
+          <div class="stealable-card-target ${isClickable ? 'can-steal-touch' : ''} card-val-target-${valNum}" 
+               ${!isMe ? `onclick="handleStealCard('${p.id}', ${valNum})"` : ''} 
+               title="${isClickable ? '¡Toca para robarle esta carta!' : (isMe ? 'Tu carta abierta en riesgo' : '')}">
             ${renderPelusaCard(valNum, { size: 'mini', badge: exposedGroups[v], isClickable })}
           </div>
         `;
@@ -502,17 +518,43 @@ function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {
       <div class="opponent-header">
         <div class="opp-avatar">${renderPelusaAvatar(p.avatar || 1, { size: 'normal' })}</div>
         <div class="opp-info">
-          <div class="opp-name">${escapeHtml(p.name)} ${isHisTurn ? '<span class="playing-indicator">🎯 Jugando</span>' : ''}</div>
+          <div class="opp-name">${escapeHtml(p.name)} ${isMe ? '<span class="badge-me">(Tú)</span>' : ''} ${isHisTurn ? '<span class="playing-indicator">🎯 Jugando</span>' : ''}</div>
           <div class="opp-score">🔒 ${p.safeScore} pts (${p.safeCount} cartas)</div>
         </div>
       </div>
       <div class="opp-exposed-section">
-        <div class="section-title">Cartas expuestas:</div>
+        <div class="section-title">${isMe ? 'Tus cartas expuestas:' : 'Cartas expuestas:'}</div>
         <div class="opp-exposed-cards">${exposedCardsHtml}</div>
       </div>
     `;
 
     opponentsContainer.appendChild(card);
+  });
+}
+
+function renderMyDockExposedCards(cards) {
+  const container = document.getElementById('my-dock-exposed-cards');
+  if (!container) return;
+
+  if (!cards || cards.length === 0) {
+    container.innerHTML = '<span class="no-exposed-hint">Sin cartas abiertas</span>';
+    return;
+  }
+
+  const groups = {};
+  cards.forEach(c => {
+    groups[c.value] = (groups[c.value] || 0) + 1;
+  });
+
+  const uniqueVals = Object.keys(groups).sort((a,b) => a - b);
+  container.innerHTML = '';
+  uniqueVals.forEach(v => {
+    const valNum = Number(v);
+    const wrap = document.createElement('div');
+    wrap.className = `my-dock-card-item card-val-my-${valNum}`;
+    wrap.title = `Tu Pelusa ${valNum} (en riesgo)`;
+    wrap.innerHTML = renderPelusaCard(valNum, { size: 'mini', badge: groups[v] });
+    container.appendChild(wrap);
   });
 }
 

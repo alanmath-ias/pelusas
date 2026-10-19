@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=3.0">
+  <link rel="stylesheet" href="/css/style.css?v=3.1">
 </head>
 <body>
   <!-- Fondos dinámicos luminosos -->
@@ -218,14 +218,20 @@
           <span class="icon">🔒</span>
           <div>
             <div class="dock-val" id="my-safe-score">0</div>
-            <div class="dock-lbl">Puntos Seguros (<span id="my-safe-count">0</span> cartas)</div>
+            <div class="dock-lbl">Puntos Seguros (<span id="my-safe-count">0</span>)</div>
           </div>
         </div>
-        <div class="dock-stat-item">
-          <span class="icon">🎴</span>
-          <div>
-            <div class="dock-val" id="my-exposed-count">0</div>
-            <div class="dock-lbl">Expuestas en Riesgo</div>
+
+        <div class="dock-stat-divider"></div>
+
+        <!-- Mis Cartas Abiertas visibles todo el tiempo -->
+        <div class="dock-exposed-tray">
+          <div class="dock-exposed-header">
+            <span class="icon">🎴</span>
+            <span class="dock-lbl">Mis Abiertas (<span id="my-exposed-count">0</span>):</span>
+          </div>
+          <div id="my-dock-exposed-cards" class="dock-exposed-cards-row">
+            <span class="no-exposed-hint">Sin cartas abiertas</span>
           </div>
         </div>
       </div>
@@ -283,8 +289,8 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/pelusas-cards.js?v=3.0"></script>
-  <script src="/js/audio.js?v=3.0"></script>
-  <script src="/js/client.js?v=3.0"></script>
+  <script src="/js/pelusas-cards.js?v=3.1"></script>
+  <script src="/js/audio.js?v=3.1"></script>
+  <script src="/js/client.js?v=3.1"></script>
 </body>
 </html>
