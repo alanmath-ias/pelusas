@@ -2,50 +2,215 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pelusas | Juegos AlanMath</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <!-- Fondos dinámicos luminosos -->
   <div class="bg-glow bg-glow-1"></div>
   <div class="bg-glow bg-glow-2"></div>
   <div class="bg-glow bg-glow-3"></div>
 
-  <main class="container">
-    <header class="header">
-      <div class="badge">JUEGOS ALANMATH</div>
-      <h1 class="title">Pelusas</h1>
-      <p class="subtitle">Juego de cartas multijugador en tiempo real</p>
+  <!-- PANTALLA 1: LOBBY -->
+  <div id="screen-lobby" class="screen-container">
+    <header class="lobby-header">
+      <div class="brand-badge">JUEGOS ALANMATH</div>
+      <h1 class="game-title">Pelusas</h1>
+      <p class="game-tagline">El juego de cartas en línea para arriesgarte y robar pelusas</p>
     </header>
 
-    <div class="status-card">
-      <div class="status-indicator">
-        <span class="status-dot"></span>
-        <span class="status-text">Servidor y Dominio Vinculados con Éxito</span>
-      </div>
-      <p class="status-desc">
-        La infraestructura en <strong>Hetzner + Coolify</strong> bajo el dominio <strong>juegos.alanmath.com</strong> está lista.
-      </p>
-
-      <div class="cards-preview">
-        <div class="preview-card c-1"><span class="c-num">1</span></div>
-        <div class="preview-card c-3"><span class="c-num">3</span></div>
-        <div class="preview-card c-5"><span class="c-num">5</span></div>
-        <div class="preview-card c-7"><span class="c-num">7</span></div>
-        <div class="preview-card c-10"><span class="c-num">10</span></div>
+    <!-- Formulario inicial para crear/unirse -->
+    <div id="lobby-form-area" class="card-glass lobby-box">
+      <div class="form-group">
+        <label for="input-player-name">Tu Nombre o Apodo:</label>
+        <input type="text" id="input-player-name" placeholder="Ej: Alan" maxlength="15" autofocus>
       </div>
 
-      <div class="room-notice">
-        <span>🎮 Próximamente: Crear salas privadas y compartir por WhatsApp con un solo clic.</span>
+      <div class="form-group">
+        <label>Elige tu Pelusa Favorita:</label>
+        <div id="avatar-selector" class="avatar-grid">
+          <!-- Generado dinámicamente con las 10 pelusas -->
+        </div>
+      </div>
+
+      <div class="lobby-actions">
+        <button id="btn-create-room" class="btn btn-primary btn-large">
+          <span>✨ Crear Nueva Partida</span>
+        </button>
+
+        <div class="divider"><span>o únete a una existente</span></div>
+
+        <div class="join-row">
+          <input type="text" id="input-room-code" placeholder="CÓDIGO (Ej: PELU-4821)" maxlength="10">
+          <button id="btn-join-room" class="btn btn-secondary">Unirse</button>
+        </div>
       </div>
     </div>
 
-    <footer class="footer">
-      <p>© 2026 AlanMath. Todos los derechos reservados.</p>
+    <!-- Sala de espera para anfitrión y amigos -->
+    <div id="lobby-waiting-area" class="card-glass lobby-box" style="display: none;">
+      <div class="waiting-header">
+        <div class="code-title">Código de la Sala</div>
+        <div id="lobby-room-code-text" class="room-code-display">PELU-0000</div>
+        <p class="share-hint">Comparte este enlace para que tus amigos entren directo desde su móvil:</p>
+      </div>
+
+      <div class="share-buttons-row">
+        <a id="btn-whatsapp-invite" target="_blank" class="btn btn-whatsapp">
+          <span>📱 Invitar por WhatsApp</span>
+        </a>
+        <button id="btn-copy-room-link" class="btn btn-copy">
+          <span>📋 Copiar Enlace</span>
+        </button>
+      </div>
+
+      <div class="lobby-players-section">
+        <h3>Jugadores en la sala (<span id="player-count"></span>):</h3>
+        <div id="lobby-players-list" class="lobby-players-grid">
+          <!-- Jugadores conectados -->
+        </div>
+      </div>
+
+      <div class="start-action-row">
+        <button id="btn-start-game" class="btn btn-accent btn-large" style="display: none;">
+          ¡Iniciar Partida!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA 2: MESA DE JUEGO MULTIJUGADOR -->
+  <div id="screen-game" class="screen-container" style="display: none;">
+    <!-- Barra superior -->
+    <header class="game-topbar">
+      <div class="topbar-left">
+        <span class="game-logo-badge">PELUSAS</span>
+        <span class="room-pill">Sala: <strong id="game-room-code">----</strong></span>
+      </div>
+      <div class="topbar-center">
+        <div id="turn-status-badge" class="turn-badge">Cargando...</div>
+      </div>
+      <div class="topbar-right">
+        <button id="btn-sound-toggle" class="icon-btn" title="Silenciar / Activar Sonido">🔊</button>
+      </div>
+    </header>
+
+    <!-- Zona de Rivales -->
+    <section class="opponents-strip">
+      <div id="opponents-container" class="opponents-grid">
+        <!-- Tarjetas de otros jugadores -->
+      </div>
+    </section>
+
+    <!-- Mesa Central -->
+    <main class="game-table">
+      <!-- Mazo central: Montón de Polvo -->
+      <div class="deck-zone">
+        <div id="deck-pile" class="deck-pile" title="Toca para robar una carta">
+          <div class="deck-inner">
+            <div class="deck-label">MONTÓN DE POLVO</div>
+            <div class="deck-icon">🃏</div>
+            <div id="deck-counter" class="deck-counter">110 / 110</div>
+          </div>
+          <div class="deck-card-layer layer-1"></div>
+          <div class="deck-card-layer layer-2"></div>
+        </div>
+      </div>
+
+      <!-- Área de jugada del turno activo -->
+      <div class="turn-play-zone">
+        <div class="turn-stats-bar">
+          <div class="stat-bubble">
+            <span class="stat-label">Números diferentes en este turno:</span>
+            <span id="unique-counter-text" class="stat-val">0 / 3</span>
+          </div>
+        </div>
+
+        <div id="risk-warning" class="risk-alert" style="display: none;"></div>
+
+        <!-- Botones de robo a rivales -->
+        <div id="steal-actions-container" class="steal-container"></div>
+
+        <!-- Cartas robadas en este turno -->
+        <div id="turn-drawn-cards" class="turn-cards-display">
+          <!-- Cartas del turno actual -->
+        </div>
+
+        <!-- Botones de acción del turno -->
+        <div class="turn-actions-bar">
+          <button id="btn-draw-card" class="btn btn-draw">
+            <span>🃏 Robar Pelusa</span>
+          </button>
+          <button id="btn-stop-turn" class="btn btn-stop" disabled>
+            <span>🛑 Plantarse (Guardar Turno)</span>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Dock inferior con mis datos y reacciones -->
+    <footer id="my-player-dock" class="my-dock">
+      <div class="dock-stats">
+        <div class="dock-stat-item">
+          <span class="icon">🔒</span>
+          <div>
+            <div class="dock-val" id="my-safe-score">0</div>
+            <div class="dock-lbl">Puntos Seguros (<span id="my-safe-count">0</span> cartas)</div>
+          </div>
+        </div>
+        <div class="dock-stat-item">
+          <span class="icon">🎴</span>
+          <div>
+            <div class="dock-val" id="my-exposed-count">0</div>
+            <div class="dock-lbl">Expuestas en Riesgo</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de reacciones rápidas -->
+      <div class="reaction-bar">
+        <button class="reaction-btn" data-emoji="😂">😂</button>
+        <button class="reaction-btn" data-emoji="😱">😱</button>
+        <button class="reaction-btn" data-emoji="😈">😈</button>
+        <button class="reaction-btn" data-emoji="🔥">🔥</button>
+        <button class="reaction-btn" data-emoji="💨">💨</button>
+        <button class="reaction-btn" data-emoji="👏">👏</button>
+      </div>
     </footer>
-  </main>
+
+    <!-- Historial de eventos / Logs -->
+    <aside class="game-ticker">
+      <ul id="game-logs-list" class="logs-feed"></ul>
+    </aside>
+  </div>
+
+  <!-- PANTALLA 3: FIN DE JUEGO / PODIO -->
+  <div id="screen-gameover" class="modal-overlay" style="display: none;">
+    <div class="card-glass gameover-card">
+      <div class="trophy-badge">🏆</div>
+      <h2>¡Fin de la Partida!</h2>
+      <p class="gameover-desc">Se ha terminado el montón de polvo. Estos son los resultados finales:</p>
+
+      <div id="podium-list" class="podium-container">
+        <!-- Filas del podio -->
+      </div>
+
+      <div class="gameover-actions">
+        <button id="btn-play-again" class="btn btn-primary btn-large">
+          🔄 Jugar Otra Partida
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/pelusas-cards.js"></script>
+  <script src="/js/audio.js"></script>
+  <script src="/js/client.js"></script>
 </body>
 </html>
