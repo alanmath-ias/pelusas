@@ -83,7 +83,7 @@ function buildAvatarSelector() {
   for (let i = 1; i <= 10; i++) {
     const btn = document.createElement('div');
     btn.className = `avatar-option ${i === selectedAvatar ? 'selected' : ''}`;
-    btn.innerHTML = renderPelusaCard(i, { size: 'avatar' });
+    btn.innerHTML = renderPelusaAvatar(i, { size: 'large' });
     btn.onclick = () => {
       selectedAvatar = i;
       document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
@@ -216,7 +216,7 @@ function updateLobbyPlayers(players, hostId) {
     const item = document.createElement('div');
     item.className = 'lobby-player-card';
     item.innerHTML = `
-      <div class="player-avatar-mini">${renderPelusaCard(p.avatar || 1, { size: 'tiny' })}</div>
+      <div class="player-avatar-mini">${renderPelusaAvatar(p.avatar || 1, { size: 'tiny' })}</div>
       <div class="player-info">
         <span class="player-name">${escapeHtml(p.name)} ${isMe ? '<small>(Tú)</small>' : ''}</span>
         ${isHost ? '<span class="badge-host">👑 Anfitrión</span>' : ''}
@@ -352,7 +352,7 @@ function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {
 
     card.innerHTML = `
       <div class="opponent-header">
-        <div class="opp-avatar">${renderPelusaCard(p.avatar || 1, { size: 'avatar' })}</div>
+        <div class="opp-avatar">${renderPelusaAvatar(p.avatar || 1, { size: 'normal' })}</div>
         <div class="opp-info">
           <div class="opp-name">${escapeHtml(p.name)} ${isHisTurn ? '<span class="playing-indicator">🎯 Jugando</span>' : ''}</div>
           <div class="opp-score">🔒 ${p.safeScore} pts (${p.safeCount} cartas)</div>
@@ -468,7 +468,7 @@ function renderGameOver(state) {
     row.className = `podium-row place-${index + 1} ${p.id === myPlayerId ? 'my-row' : ''}`;
     row.innerHTML = `
       <div class="podium-rank">${medal} #${index + 1}</div>
-      <div class="podium-avatar">${renderPelusaCard(p.avatar || 1, { size: 'tiny' })}</div>
+      <div class="podium-avatar">${renderPelusaAvatar(p.avatar || 1, { size: 'tiny' })}</div>
       <div class="podium-name">${escapeHtml(p.name)} ${p.id === myPlayerId ? '(Tú)' : ''}</div>
       <div class="podium-score">${p.score} pts</div>
     `;

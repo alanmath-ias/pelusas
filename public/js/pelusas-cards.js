@@ -1,13 +1,14 @@
 /**
- * Generador visual de las 10 cartas y monstruitos de Pelusas
- * Colores sólidos y gradientes seguros sin colisión de IDs en SVG
+ * Generador visual de cartas y avatares de Pelusas
+ * Cartas con número superior y badge en esquina inferior izquierda
+ * Avatares limpios con SOLO el monstruito animado sin marco de carta
  */
 
 const PELUSAS_DATA = {
   1: {
     name: 'Pelusa Celeste',
     bg: 'linear-gradient(135deg, #38bdf8, #0284c7)',
-    borderColor: '#bae6fd',
+    borderColor: '#38bdf8',
     textColor: '#0284c7',
     renderMonster: () => `
       <g class="pelusa-monster m-1">
@@ -33,7 +34,7 @@ const PELUSAS_DATA = {
   2: {
     name: 'Pelusa Púrpura',
     bg: 'linear-gradient(135deg, #a855f7, #6b21a8)',
-    borderColor: '#e9d5ff',
+    borderColor: '#c084fc',
     textColor: '#6b21a8',
     renderMonster: () => `
       <g class="pelusa-monster m-2">
@@ -54,7 +55,7 @@ const PELUSAS_DATA = {
   3: {
     name: 'Pelusa Terracota',
     bg: 'linear-gradient(135deg, #fb923c, #c2410c)',
-    borderColor: '#ffedd5',
+    borderColor: '#fb923c',
     textColor: '#c2410c',
     renderMonster: () => `
       <g class="pelusa-monster m-3">
@@ -74,7 +75,7 @@ const PELUSAS_DATA = {
   4: {
     name: 'Pelusa Magenta',
     bg: 'linear-gradient(135deg, #e879f9, #86198f)',
-    borderColor: '#f5d0fe',
+    borderColor: '#e879f9',
     textColor: '#86198f',
     renderMonster: () => `
       <g class="pelusa-monster m-4">
@@ -96,7 +97,7 @@ const PELUSAS_DATA = {
   5: {
     name: 'Pelusa Lima',
     bg: 'linear-gradient(135deg, #a3e635, #4d7c0f)',
-    borderColor: '#ecfccb',
+    borderColor: '#a3e635',
     textColor: '#4d7c0f',
     renderMonster: () => `
       <g class="pelusa-monster m-5">
@@ -115,7 +116,7 @@ const PELUSAS_DATA = {
   6: {
     name: 'Pelusa Ámbar',
     bg: 'linear-gradient(135deg, #fbbf24, #b45309)',
-    borderColor: '#fef3c7',
+    borderColor: '#f59e0b',
     textColor: '#b45309',
     renderMonster: () => `
       <g class="pelusa-monster m-6">
@@ -133,7 +134,7 @@ const PELUSAS_DATA = {
   7: {
     name: 'Pelusa Dorada',
     bg: 'linear-gradient(135deg, #fde047, #a16207)',
-    borderColor: '#fef08a',
+    borderColor: '#facc15',
     textColor: '#a16207',
     renderMonster: () => `
       <g class="pelusa-monster m-7">
@@ -155,7 +156,7 @@ const PELUSAS_DATA = {
   8: {
     name: 'Pelusa Índigo',
     bg: 'linear-gradient(135deg, #6366f1, #312e81)',
-    borderColor: '#c7d2fe',
+    borderColor: '#818cf8',
     textColor: '#312e81',
     renderMonster: () => `
       <g class="pelusa-monster m-8">
@@ -175,7 +176,7 @@ const PELUSAS_DATA = {
   9: {
     name: 'Pelusa Esmeralda',
     bg: 'linear-gradient(135deg, #2dd4bf, #115e59)',
-    borderColor: '#ccfbf1',
+    borderColor: '#2dd4bf',
     textColor: '#115e59',
     renderMonster: () => `
       <g class="pelusa-monster m-9">
@@ -199,7 +200,7 @@ const PELUSAS_DATA = {
   10: {
     name: 'Pelusa Fiesta Rosa',
     bg: 'linear-gradient(135deg, #f43f5e, #9d174d)',
-    borderColor: '#ffe4e6',
+    borderColor: '#fb7185',
     textColor: '#9d174d',
     renderMonster: () => `
       <g class="pelusa-monster m-10 anim-jump-happy">
@@ -223,22 +224,42 @@ const PELUSAS_DATA = {
 };
 
 /**
- * Renderiza la carta completa con fondo sólido y borde visible garantizado
+ * Renderiza el AVATAR del jugador: SOLO el monstruito animado en medallón circular
+ * Sin marco de carta ni número, para no confundir jamás avatar con cartas.
+ */
+function renderPelusaAvatar(value, options = {}) {
+  const data = PELUSAS_DATA[value] || PELUSAS_DATA[1];
+  const sizePx = options.size === 'tiny' ? 30 : (options.size === 'large' ? 50 : 38);
+
+  return `
+    <div class="pelusa-avatar-bubble" 
+         title="${data.name}"
+         style="width: ${sizePx}px; height: ${sizePx}px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(15,23,42,0.85) 100%); border: 2.5px solid ${data.borderColor}; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; overflow: hidden;">
+      <svg viewBox="14 26 72 68" xmlns="http://www.w3.org/2000/svg" style="width: 90%; height: 90%; display: block;">
+        ${data.renderMonster()}
+      </svg>
+    </div>
+  `;
+}
+
+/**
+ * Renderiza la CARTA completa de Pelusas
+ * Con número superior y nube x2/x3 pequeña colocada ABAJO A LA IZQUIERDA
  */
 function renderPelusaCard(value, options = {}) {
   const data = PELUSAS_DATA[value] || PELUSAS_DATA[1];
   const sizeClass = options.size || 'normal';
   const isClickable = options.isClickable;
   const extraAttrs = options.attrs || '';
-  // Solo mostrar la nube si hay MÁS de 1 carta (x2, x3...), evitando tapar con x1
+
+  // Nube pequeña xN posicionada abajo a la izquierda (solo si > 1)
   const badgeHtml = (options.badge !== undefined && options.badge !== null && Number(options.badge) > 1) 
-    ? `<div class="card-count-badge">x${options.badge}</div>` 
+    ? `<div class="card-count-badge" style="position: absolute !important; bottom: -4px !important; left: -4px !important; top: auto !important; right: auto !important; background: #ef4444; border: 1.5px solid #ffffff; color: #ffffff; font-family: 'Outfit', sans-serif; font-size: ${sizeClass === 'tiny' || sizeClass === 'mini' ? '10px' : '11px'}; font-weight: 900; border-radius: 9999px; padding: 1px 5px; line-height: 1.1; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 10; pointer-events: none; white-space: nowrap;">x${options.badge}</div>` 
     : '';
 
   let widthPx = 80;
   let numFontSize = '22px';
   if (sizeClass === 'tiny') { widthPx = 28; numFontSize = '11px'; }
-  else if (sizeClass === 'avatar') { widthPx = 34; numFontSize = '13px'; }
   else if (sizeClass === 'mini') { widthPx = 38; numFontSize = '14px'; }
   else if (sizeClass === 'medium') { widthPx = 82; numFontSize = '22px'; }
   else if (sizeClass === 'large') { widthPx = 100; numFontSize = '26px'; }
@@ -250,7 +271,7 @@ function renderPelusaCard(value, options = {}) {
          style="width: ${widthPx}px; aspect-ratio: 100/145; background: ${data.bg}; border: 1.5px solid #ffffff; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.35); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: ${isClickable ? 'pointer' : 'default'};">
       
       <!-- Número grande de pegatina en la parte superior -->
-      <div class="card-num-sticker" style="position: absolute; top: 2px; left: 0; right: 0; text-align: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: ${numFontSize}; line-height: 1; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 2px #000;">
+      <div class="card-num-sticker" style="position: absolute; top: 2px; left: 0; right: 0; text-align: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: ${numFontSize}; line-height: 1; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 2px #000; pointer-events: none;">
         ${value}
       </div>
 
@@ -258,6 +279,8 @@ function renderPelusaCard(value, options = {}) {
       <svg class="pelusa-card-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 85%; height: auto; margin-top: 18%; display: block; overflow: visible;">
         ${data.renderMonster()}
       </svg>
+      
+      <!-- Nube pequeña en esquina inferior izquierda -->
       ${badgeHtml}
     </div>
   `;
