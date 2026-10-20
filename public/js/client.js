@@ -83,6 +83,15 @@ const leaveActionsBox = document.getElementById('leave-actions-box');
 const gameToastBanner = document.getElementById('game-toast-banner');
 const deckConfigHint = document.getElementById('deck-config-hint');
 
+// Medidor de probabilidades en tiempo real
+const turnProbabilityCard = document.getElementById('turn-probability-card');
+const probSafeText = document.getElementById('prob-safe-text');
+const probBustText = document.getElementById('prob-bust-text');
+const probBarSafe = document.getElementById('prob-bar-safe');
+const probBarBust = document.getElementById('prob-bar-bust');
+const probDetailCounts = document.getElementById('prob-detail-counts');
+const probStealHint = document.getElementById('prob-steal-hint');
+
 // Acciones del jugador
 const btnDrawCard = document.getElementById('btn-draw-card');
 const btnStopTurn = document.getElementById('btn-stop-turn');
@@ -492,16 +501,8 @@ function renderGame(state) {
   const uniqueCount = uniqueNumbers.size;
   uniqueCounterText.innerText = `${uniqueCount} / 3`;
 
-  // Alerta de riesgo (colocada al lado derecho del mazo)
-  const arenaHint = document.getElementById('arena-hint');
-  if (uniqueCount >= 3) {
-    riskWarning.style.display = 'block';
-    riskWarning.innerHTML = '⚠️ ¡Riesgo! Repetir = perder';
-    if (arenaHint) arenaHint.style.display = 'none';
-  } else {
-    riskWarning.style.display = 'none';
-    if (arenaHint) arenaHint.style.display = 'block';
-  }
+  // Medidor dinámico de probabilidades de acierto vs derrota
+  renderProbabilities(state.probabilities, isMyTurn, state.turnState.isBusted);
 
   // Botones de acción (respetando animación de vuelo de carta)
   if (!isAnimatingCard) {
@@ -509,17 +510,95 @@ function renderGame(state) {
     btnStopTurn.disabled = !isMyTurn || !state.turnState.canStop || state.turnState.isBusted;
   }
 
-  if (isMyTurn && uniqueCount >= 3) {
+  renderLogs(state.logs);
+}
+
+function renderProbabilities(probs, isMyTurn, isBusted) {
+  if (!turnProbabilityCard) return;
+
+  const arenaHint = document.getElementById('arena-hint');
+
+  if (isBusted) {
+    turnProbabilityCard.className = 'turn-probability-card risk-extreme';
+    probSafeText.innerText = '💨 ¡Corriente de aire!';
+    probBustText.style.display = 'inline-block';
+    probBustText.innerText = 'Turno perdido';
+    probBustText.classList.add('pulsing');
+    probBarSafe.style.width = '0%';
+    probBarBust.style.width = '100%';
+    probDetailCounts.innerText = 'Carta repetida tras alcanzar ≥ 3 números';
+    probStealHint.style.display = 'none';
+
+    riskWarning.style.display = 'block';
+    riskWarning.innerHTML = '💨 ¡CORRIENTE DE AIRE!';
+    if (arenaHint) arenaHint.style.display = 'none';
+    return;
+  }
+
+  if (!probs) return;
+
+  // Clases dinámicas de riesgo visual
+  turnProbabilityCard.classList.remove('risk-extreme', 'risk-high');
+  if (probs.riskLevel === 'extreme') {
+    turnProbabilityCard.classList.add('risk-extreme');
+  } else if (probs.riskLevel === 'high') {
+    turnProbabilityCard.classList.add('risk-high');
+  }
+
+  probBarSafe.style.width = `${probs.safePercent}%`;
+  probBarBust.style.width = `${probs.bustPercent}%`;
+
+  if (probs.isSafePhase) {
+    probSafeText.innerText = '🛡️ Acierto: 100%';
+    probBustText.style.display = 'none';
+    probBustText.classList.remove('pulsing');
+    probDetailCounts.innerText = `Fase inicial (${probs.uniqueCount}/3 diferentes) • Sin riesgo`;
+
+    riskWarning.style.display = 'none';
+    if (arenaHint) {
+      arenaHint.style.display = 'block';
+      arenaHint.innerHTML = '<span>🛡️ 100% segura</span>';
+    }
+  } else {
+    probSafeText.innerText = `🛡️ Acierto: ${probs.safePercent}%`;
+    probBustText.style.display = 'inline-block';
+    probBustText.innerText = `💨 Derrota: ${probs.bustPercent}%`;
+
+    if (probs.bustPercent >= 40) {
+      probBustText.classList.add('pulsing');
+    } else {
+      probBustText.classList.remove('pulsing');
+    }
+
+    probDetailCounts.innerText = `${probs.safeCards} seguras vs ${probs.bustCards} de riesgo (${probs.totalCards} en mazo)`;
+
+    riskWarning.style.display = 'block';
+    riskWarning.innerHTML = `⚠️ Derrota: ${probs.bustPercent}% | 🛡️ ${probs.safePercent}%`;
+    if (arenaHint) arenaHint.style.display = 'none';
+  }
+
+  // Pista de robo a rival
+  if (probs.stealPercent > 0) {
+    probStealHint.style.display = 'inline-block';
+    probStealHint.innerText = `⚡ ${probs.stealPercent}% Robo rival (${probs.stealCards} cartas)`;
+  } else {
+    probStealHint.style.display = 'none';
+  }
+
+  // Actualizar texto del botón de robar para el jugador activo
+  if (isMyTurn && !probs.isSafePhase) {
     btnDrawCard.classList.add('btn-risk');
-    btnDrawCard.innerHTML = '⚡ Arriesgar (Robar Carta)';
+    btnDrawCard.innerHTML = `⚡ Arriesgar (${probs.safePercent}% éxito | ${probs.bustPercent}% derrota)`;
     btnStopTurn.classList.add('btn-safe-pulse');
+  } else if (isMyTurn) {
+    btnDrawCard.classList.remove('btn-risk');
+    btnDrawCard.innerHTML = '🃏 Robar Pelusa (100% segura)';
+    btnStopTurn.classList.remove('btn-safe-pulse');
   } else {
     btnDrawCard.classList.remove('btn-risk');
     btnDrawCard.innerHTML = '🃏 Robar Pelusa';
     btnStopTurn.classList.remove('btn-safe-pulse');
   }
-
-  renderLogs(state.logs);
 }
 
 function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {

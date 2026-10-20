@@ -155,32 +155,27 @@ function decideBotNextStep(room, botId) {
       return;
     }
 
-    // Heurística de riesgo calculada:
-    const drawn = room.turnState.drawnThisTurn;
-    const uniqueValues = new Set(drawn.map(c => c.value));
-    const uniqueCount = uniqueValues.size;
+    // Heurística de riesgo calculada con probabilidades matemáticas reales:
+    const probs = room.calculateTurnProbabilities();
     const sumPoints = drawn.reduce((acc, c) => acc + c.value, 0);
 
     let shouldStop = false;
 
-    if (uniqueCount >= 5) {
-      // 5 o más números diferentes: riesgo altísimo de repetir
-      shouldStop = Math.random() < 0.90;
-    } else if (uniqueCount === 4) {
-      if (sumPoints >= 16) {
-        shouldStop = Math.random() < 0.85;
-      } else {
-        shouldStop = Math.random() < 0.65;
-      }
-    } else if (uniqueCount === 3) {
-      if (sumPoints >= 16) {
-        shouldStop = Math.random() < 0.60;
-      } else {
-        shouldStop = Math.random() < 0.35;
-      }
+    if (probs.bustPercent >= 60) {
+      // Riesgo extremo (≥ 60% de derrota): el bot se planta la gran mayoría de las veces
+      shouldStop = Math.random() < 0.92;
+    } else if (probs.bustPercent >= 40) {
+      // Riesgo alto (40-59% de derrota)
+      shouldStop = sumPoints >= 14 ? (Math.random() < 0.85) : (Math.random() < 0.65);
+    } else if (probs.bustPercent >= 25) {
+      // Riesgo medio (25-39% de derrota)
+      shouldStop = sumPoints >= 16 ? (Math.random() < 0.65) : (Math.random() < 0.35);
+    } else {
+      // Riesgo bajo (< 25%): roba a menos que ya tenga demasiados puntos
+      shouldStop = sumPoints >= 24 && Math.random() < 0.50;
     }
 
-    // Si el mazo se está terminando (<= 4 cartas), asegurar puntos
+    // Si el mazo se está terminando (<= 4 cartas), asegurar puntos de inmediato
     if (room.deck.length <= 4) {
       shouldStop = true;
     }

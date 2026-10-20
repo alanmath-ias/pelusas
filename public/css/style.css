@@ -1030,6 +1030,135 @@ input[type="text"]:focus {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+/* ==========================================================================
+   MEDIDOR DE PROBABILIDAD DE ACIERTO Y DERROTA (TIEMPO REAL)
+   ========================================================================== */
+
+.turn-probability-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 0.45rem 0.75rem;
+  margin-bottom: 0.35rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.turn-probability-card.risk-extreme {
+  border-color: rgba(239, 68, 68, 0.75);
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+  background: rgba(30, 10, 15, 0.85);
+}
+
+.turn-probability-card.risk-high {
+  border-color: rgba(245, 158, 11, 0.75);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
+}
+
+.prob-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.prob-title-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.prob-values-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.prob-safe-tag {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.16);
+  padding: 0.12rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  white-space: nowrap;
+}
+
+.prob-bust-tag {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.18);
+  padding: 0.12rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  white-space: nowrap;
+}
+
+.prob-bust-tag.pulsing {
+  animation: pulse-danger 1s infinite ease-in-out;
+}
+
+/* Barra dual de progreso animada */
+.prob-meter-track {
+  width: 100%;
+  height: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.prob-segment-safe {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.7);
+}
+
+.prob-segment-bust {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+}
+
+.prob-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+.prob-detail-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #94a3b8;
+}
+
+.prob-steal-badge {
+  color: #fde047;
+  background: rgba(234, 179, 8, 0.18);
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  padding: 0.08rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 800;
+  white-space: nowrap;
+  margin-left: 0.4rem;
 }
 
 /* Botones de acción del turno */

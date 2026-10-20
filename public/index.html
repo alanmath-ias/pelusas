@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=3.2">
+  <link rel="stylesheet" href="/css/style.css?v=3.3">
 </head>
 <body>
   <!-- Fondos dinámicos luminosos -->
@@ -209,6 +209,28 @@
         </div>
       </div>
 
+      <!-- Medidor de Probabilidad en Tiempo Real (Acierto vs Derrota) -->
+      <div id="turn-probability-card" class="turn-probability-card">
+        <div class="prob-header-row">
+          <div class="prob-title-badge">
+            <span class="prob-icon">🎲</span>
+            <span class="prob-label">Próxima carta:</span>
+          </div>
+          <div class="prob-values-summary" id="prob-values-summary">
+            <span class="prob-safe-tag" id="prob-safe-text">🛡️ Acierto: 100%</span>
+            <span class="prob-bust-tag" id="prob-bust-text" style="display: none;">💨 Derrota: 0%</span>
+          </div>
+        </div>
+        <div class="prob-meter-track" title="Probabilidad calculada en vivo según el mazo restante">
+          <div id="prob-bar-safe" class="prob-segment-safe" style="width: 100%;"></div>
+          <div id="prob-bar-bust" class="prob-segment-bust" style="width: 0%;"></div>
+        </div>
+        <div class="prob-footer-row">
+          <span id="prob-detail-counts" class="prob-detail-text">Fase inicial: &lt; 3 números (Sin riesgo)</span>
+          <span id="prob-steal-hint" class="prob-steal-badge" style="display: none;">⚡ Robo a rival: 0%</span>
+        </div>
+      </div>
+
       <!-- Botones de acción del turno -->
       <div class="turn-actions-bar">
         <button id="btn-draw-card" class="btn btn-draw">
@@ -298,8 +320,8 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/pelusas-cards.js?v=3.2"></script>
-  <script src="/js/audio.js?v=3.2"></script>
-  <script src="/js/client.js?v=3.2"></script>
+  <script src="/js/pelusas-cards.js?v=3.3"></script>
+  <script src="/js/audio.js?v=3.3"></script>
+  <script src="/js/client.js?v=3.3"></script>
 </body>
 </html>
