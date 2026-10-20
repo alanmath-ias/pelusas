@@ -34,6 +34,23 @@ let previousTurnCards = [];
 let previousTurnIndex = null;
 let isAnimatingCard = false;
 let isFirstGameRender = true;
+let cardAnimationTimeouts = [];
+
+function clearCardAnimationTimeouts() {
+  cardAnimationTimeouts.forEach(t => clearTimeout(t));
+  cardAnimationTimeouts = [];
+  document.querySelectorAll('.flying-card-clone').forEach(el => el.remove());
+}
+
+function safeSetTimeout(fn, ms) {
+  const t = setTimeout(() => {
+    const idx = cardAnimationTimeouts.indexOf(t);
+    if (idx !== -1) cardAnimationTimeouts.splice(idx, 1);
+    fn();
+  }, ms);
+  cardAnimationTimeouts.push(t);
+  return t;
+}
 
 // Elementos DOM
 const screenLobby = document.getElementById('screen-lobby');
@@ -506,10 +523,15 @@ function renderGame(state) {
   // Medidor dinámico de probabilidades de acierto vs derrota
   renderProbabilities(state.probabilities, isMyTurn, state.turnState.isBusted);
 
-  // Botones de acción (respetando animación de vuelo de carta)
-  if (!isAnimatingCard) {
-    btnDrawCard.disabled = !isMyTurn || state.deckCount === 0 || state.turnState.isBusted;
-    btnStopTurn.disabled = !isMyTurn || !state.turnState.canStop || state.turnState.isBusted;
+  // Sincronizar botones de acción según el estado del turno
+  syncActionButtons();
+
+  // Failsafe: Si es mi turno y no estoy en bust, garantizar que los botones se desbloqueen
+  if (isMyTurn && state.deckCount > 0 && !state.turnState.isBusted) {
+    safeSetTimeout(() => {
+      isAnimatingCard = false;
+      syncActionButtons();
+    }, 700);
   }
 
   renderLogs(state.logs);
@@ -719,10 +741,12 @@ function renderTurnCardsStatic(cards) {
 }
 
 function renderTurnCards(cards, lastDrawnCard, isBusted, turnIndex) {
-  // Si cambió el turno a otro jugador, resetear historial
+  // Si cambió el turno a otro jugador, resetear historial y cancelar animaciones residuales
   if (previousTurnIndex !== turnIndex) {
     previousTurnIndex = turnIndex;
     previousTurnCards = [];
+    isAnimatingCard = false;
+    clearCardAnimationTimeouts();
   }
 
   // Si es la primera vez que se renderiza el juego (recarga o entrada directa), renderizar sin animación
@@ -760,12 +784,15 @@ function renderTurnCards(cards, lastDrawnCard, isBusted, turnIndex) {
       el.classList.add('card-wind-bust');
     });
 
-    setTimeout(() => {
+    safeSetTimeout(() => {
       bustClone.classList.add('card-wind-bust');
-      setTimeout(() => {
+      safeSetTimeout(() => {
         bustClone.remove();
-        turnDrawnCards.innerHTML = '<div class="empty-turn-notice">💨 ¡Corriente de aire! Cartas devueltas al montón</div>';
+        if (currentRoom && currentRoom.currentTurnIndex === turnIndex) {
+          turnDrawnCards.innerHTML = '<div class="empty-turn-notice">💨 ¡Corriente de aire! Cartas devueltas al montón</div>';
+        }
         isAnimatingCard = false;
+        syncActionButtons();
       }, 700);
     }, 600);
 
@@ -960,11 +987,19 @@ function renderTurnCards(cards, lastDrawnCard, isBusted, turnIndex) {
 
 function syncActionButtons() {
   if (!currentRoom) return;
-  const isMyTurn = currentRoom.isMyTurn;
-  const canStop = currentRoom.turnState ? currentRoom.turnState.canStop : false;
-  const isBusted = currentRoom.turnState ? currentRoom.turnState.isBusted : false;
-  btnDrawCard.disabled = !isMyTurn || currentRoom.deckCount === 0 || isBusted || isAnimatingCard;
-  btnStopTurn.disabled = !isMyTurn || !canStop || isBusted || isAnimatingCard;
+  const isMyTurn = Boolean(currentRoom.isMyTurn);
+  const canStop = Boolean(currentRoom.turnState && currentRoom.turnState.canStop);
+  const isBusted = Boolean(currentRoom.turnState && currentRoom.turnState.isBusted);
+  const hasCards = (currentRoom.deckCount || 0) > 0;
+
+  if (!isMyTurn || !hasCards || isBusted) {
+    btnDrawCard.disabled = true;
+    btnStopTurn.disabled = true;
+    return;
+  }
+
+  btnDrawCard.disabled = isAnimatingCard;
+  btnStopTurn.disabled = isAnimatingCard || !canStop;
 }
 
 function renderLogs(logs) {
@@ -977,19 +1012,26 @@ function renderLogs(logs) {
 }
 
 btnDrawCard.onclick = () => {
-  if (isAnimatingCard) return;
+  if (!currentRoom || !currentRoom.isMyTurn) return;
+  if (currentRoom.deckCount === 0 || (currentRoom.turnState && currentRoom.turnState.isBusted)) return;
+  // Desbloqueo forzado por interacción directa del usuario
+  isAnimatingCard = false;
   socket.emit('draw_card');
 };
 
 deckPile.onclick = () => {
-  if (isAnimatingCard) return;
-  if (!btnDrawCard.disabled) {
-    socket.emit('draw_card');
-  }
+  if (!currentRoom || !currentRoom.isMyTurn) return;
+  if (currentRoom.deckCount === 0 || (currentRoom.turnState && currentRoom.turnState.isBusted)) return;
+  // Tocar el montón de polvo en el centro siempre permite robar en tu turno
+  isAnimatingCard = false;
+  btnDrawCard.disabled = false;
+  socket.emit('draw_card');
 };
 
 btnStopTurn.onclick = () => {
-  if (isAnimatingCard) return;
+  if (!currentRoom || !currentRoom.isMyTurn) return;
+  if (!currentRoom.turnState || !currentRoom.turnState.canStop) return;
+  isAnimatingCard = false;
   socket.emit('stop_turn');
 };
 
