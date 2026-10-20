@@ -44,6 +44,7 @@ const screenGameOver = document.getElementById('screen-gameover');
 const inputPlayerName = document.getElementById('input-player-name');
 const inputRoomCode = document.getElementById('input-room-code');
 const btnCreateRoom = document.getElementById('btn-create-room');
+const btnPlayVsBot = document.getElementById('btn-play-vs-bot');
 const btnJoinRoom = document.getElementById('btn-join-room');
 const avatarSelector = document.getElementById('avatar-selector');
 
@@ -61,6 +62,7 @@ const lobbyRoomCodeText = document.getElementById('lobby-room-code-text');
 const btnWhatsappInvite = document.getElementById('btn-whatsapp-invite');
 const btnCopyRoomLink = document.getElementById('btn-copy-room-link');
 const lobbyPlayersList = document.getElementById('lobby-players-list');
+const btnAddBot = document.getElementById('btn-add-bot');
 const btnStartGame = document.getElementById('btn-start-game');
 
 // Mesa de Juego
@@ -207,8 +209,12 @@ socket.on('room_created', ({ roomCode, state }) => {
   currentRoom = state;
   sessionStorage.setItem('pelusa_active_room', roomCode);
   localStorage.setItem('pelusa_active_room', roomCode);
-  showLobbyWaiting(roomCode);
-  updateLobbyPlayers(state.players, state.hostId, state.hostToken);
+  if (state.status === 'playing') {
+    renderGame(state);
+  } else {
+    showLobbyWaiting(roomCode);
+    updateLobbyPlayers(state.players, state.hostId, state.hostToken);
+  }
 });
 
 socket.on('room_joined_success', ({ roomCode, state, playerToken: updatedToken }) => {
@@ -299,7 +305,11 @@ socket.on('error_msg', ({ message }) => {
   }
   if (btnCreateRoom) {
     btnCreateRoom.disabled = false;
-    btnCreateRoom.innerHTML = '<span>✨ Crear Nueva Partida</span>';
+    btnCreateRoom.innerHTML = '<span>✨ Crear Sala Multijugador</span>';
+  }
+  if (btnPlayVsBot) {
+    btnPlayVsBot.disabled = false;
+    btnPlayVsBot.innerHTML = '<span>🤖 Jugar contra la Máquina (1 vs 1)</span>';
   }
 });
 
@@ -333,6 +343,30 @@ btnCreateRoom.onclick = () => {
   btnCreateRoom.disabled = true;
   btnCreateRoom.innerText = '⏳ Creando sala...';
   socket.emit('create_room', { playerName: name, avatar: selectedAvatar, playerToken });
+};
+
+if (btnPlayVsBot) {
+  btnPlayVsBot.onclick = () => {
+    const name = inputPlayerName.value.trim() || 'Jugador 1';
+    btnPlayVsBot.disabled = true;
+    btnPlayVsBot.innerText = '🤖 Preparando partida...';
+    socket.emit('play_vs_bot', {
+      playerName: name,
+      avatar: selectedAvatar,
+      playerToken,
+      deckSize: 50
+    });
+  };
+}
+
+if (btnAddBot) {
+  btnAddBot.onclick = () => {
+    socket.emit('add_bot');
+  };
+}
+
+window.removeBotFromLobby = function(botId) {
+  socket.emit('remove_bot', { botId });
 };
 
 if (btnQuickJoin) {
@@ -371,6 +405,12 @@ function updateLobbyPlayers(players, hostId, hostToken) {
     playerCountEl.innerText = players.length;
   }
 
+  const isMeHost = hostId === myPlayerId || (hostToken && playerToken === hostToken);
+
+  if (btnAddBot) {
+    btnAddBot.style.display = isMeHost && players.length < 5 ? 'inline-flex' : 'none';
+  }
+
   players.forEach(p => {
     const isHost = p.id === hostId || (hostToken && p.token === hostToken);
     const isMe = p.id === myPlayerId || p.token === playerToken;
@@ -380,18 +420,19 @@ function updateLobbyPlayers(players, hostId, hostToken) {
       <div class="player-avatar-mini">${renderPelusaAvatar(p.avatar || 1, { size: 'tiny' })}</div>
       <div class="player-info">
         <span class="player-name">${escapeHtml(p.name)} ${isMe ? '<small>(Tú)</small>' : ''}</span>
+        ${p.isBot ? '<span class="badge-bot">🤖 Bot</span>' : ''}
         ${isHost ? '<span class="badge-host">👑 Anfitrión</span>' : ''}
       </div>
+      ${isMeHost && p.isBot ? `<button class="btn-remove-bot" onclick="window.removeBotFromLobby('${p.id}')" title="Quitar este bot">✖ Quitar</button>` : ''}
     `;
     lobbyPlayersList.appendChild(item);
   });
 
-  const isMeHost = hostId === myPlayerId || (hostToken && playerToken === hostToken);
   btnStartGame.style.display = isMeHost ? 'block' : 'none';
   btnStartGame.disabled = players.length < 2;
 
   if (players.length < 2 && isMeHost) {
-    btnStartGame.innerText = '⏳ Esperando a tus amigos (mínimo 2 jugadores)...';
+    btnStartGame.innerText = '⏳ Esperando jugadores (mínimo 2 o agrega un Bot)...';
     btnStartGame.classList.remove('btn-ready-pulse');
   } else if (isMeHost) {
     btnStartGame.innerText = `🚀 ¡Iniciar Partida (${players.length} jugadores)!`;
@@ -427,7 +468,8 @@ function renderGame(state) {
     turnStatusBadge.innerHTML = '⭐ ¡ES TU TURNO! Elige tu jugada';
   } else {
     turnStatusBadge.className = 'turn-badge';
-    turnStatusBadge.innerHTML = `Turno de <strong>${escapeHtml(activePlayer ? activePlayer.name : '')}</strong>...`;
+    const isBotTurn = activePlayer && activePlayer.isBot;
+    turnStatusBadge.innerHTML = `Turno de <strong>${escapeHtml(activePlayer ? activePlayer.name : '')}</strong>${isBotTurn ? ' 🤖 <em>(pensando...)</em>' : ''}...`;
   }
 
   // Renderizar oponentes con cartas tocables para robar
@@ -518,7 +560,7 @@ function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {
       <div class="opponent-header">
         <div class="opp-avatar">${renderPelusaAvatar(p.avatar || 1, { size: 'normal' })}</div>
         <div class="opp-info">
-          <div class="opp-name">${escapeHtml(p.name)} ${isMe ? '<span class="badge-me">(Tú)</span>' : ''} ${isHisTurn ? '<span class="playing-indicator">🎯 Jugando</span>' : ''}</div>
+          <div class="opp-name">${escapeHtml(p.name)} ${isMe ? '<span class="badge-me">(Tú)</span>' : ''} ${p.isBot ? '<span class="badge-bot">🤖 Bot</span>' : ''} ${isHisTurn ? '<span class="playing-indicator">🎯 Jugando</span>' : ''}</div>
           <div class="opp-score">🔒 ${p.safeScore} pts (${p.safeCount} cartas)</div>
         </div>
       </div>

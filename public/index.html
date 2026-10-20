@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=3.1">
+  <link rel="stylesheet" href="/css/style.css?v=3.2">
 </head>
 <body>
   <!-- Fondos dinámicos luminosos -->
@@ -62,7 +62,11 @@
         <!-- Modo Estándar (cuando no hay enlace de invitación) -->
         <div id="standard-actions-box">
           <button id="btn-create-room" class="btn btn-primary btn-large" style="width: 100%;">
-            <span>✨ Crear Nueva Partida</span>
+            <span>✨ Crear Sala Multijugador</span>
+          </button>
+
+          <button id="btn-play-vs-bot" class="btn btn-bot-play btn-large" style="width: 100%; margin-top: 0.6rem;">
+            <span>🤖 Jugar contra la Máquina (1 vs 1)</span>
           </button>
 
           <div class="divider"><span>o únete a una existente</span></div>
@@ -93,7 +97,12 @@
       </div>
 
       <div class="lobby-players-section">
-        <h3>Jugadores en la sala (<span id="player-count"></span>):</h3>
+        <div class="lobby-players-header">
+          <h3>Jugadores en la sala (<span id="player-count"></span>):</h3>
+          <button id="btn-add-bot" type="button" class="btn-add-bot-small" title="Agregar un jugador controlado por la máquina">
+            <span>+ 🤖 Agregar Bot</span>
+          </button>
+        </div>
         <div id="lobby-players-list" class="lobby-players-grid">
           <!-- Jugadores conectados -->
         </div>
@@ -289,8 +298,8 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/pelusas-cards.js?v=3.1"></script>
-  <script src="/js/audio.js?v=3.1"></script>
-  <script src="/js/client.js?v=3.1"></script>
+  <script src="/js/pelusas-cards.js?v=3.2"></script>
+  <script src="/js/audio.js?v=3.2"></script>
+  <script src="/js/client.js?v=3.2"></script>
 </body>
 </html>

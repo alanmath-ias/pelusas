@@ -49,6 +49,159 @@ function broadcastRoom(room, eventName = 'room_state', extraData = null) {
   });
 }
 
+// --- Control Inteligente de Turnos de Bots (IA) ---
+function checkBotTurn(room) {
+  if (!room || room.status !== 'playing') return;
+
+  const activePlayer = room.getCurrentPlayer();
+  if (!activePlayer || !activePlayer.isBot) return;
+
+  if (room.botActionTimeout) {
+    clearTimeout(room.botActionTimeout);
+    room.botActionTimeout = null;
+  }
+
+  // Esperar 1.2 segundos para que el jugador humano aprecie la transición de turno
+  room.botActionTimeout = setTimeout(() => {
+    runBotAction(room, activePlayer.id);
+  }, 1200);
+}
+
+function runBotAction(room, botId) {
+  if (!room || room.status !== 'playing') return;
+  const activePlayer = room.getCurrentPlayer();
+  if (!activePlayer || activePlayer.id !== botId || !activePlayer.isBot) return;
+
+  // 1. El bot roba una carta del montón
+  const res = room.drawCard(botId);
+  if (!res.success) return;
+
+  broadcastRoom(room, 'card_drawn', {
+    card: res.card,
+    busted: res.busted,
+    gameEnded: res.gameEnded
+  });
+
+  // Si se pasa (busted)
+  if (res.busted) {
+    if (Math.random() < 0.45) {
+      setTimeout(() => {
+        io.to(room.code).emit('player_reaction', { playerId: botId, emoji: Math.random() < 0.5 ? '😱' : '💨' });
+      }, 350);
+    }
+    setTimeout(() => {
+      room.advanceTurn();
+      broadcastRoom(room, 'turn_changed');
+      checkBotTurn(room);
+    }, 1500);
+    return;
+  }
+
+  // Si el mazo se agotó y terminó la partida
+  if (res.gameEnded) {
+    broadcastRoom(room, 'gameover', room.endGame());
+    return;
+  }
+
+  // 2. Verificar si puede robar cartas a un rival con el número que acaba de sacar
+  const drawnVal = res.card.value;
+  let targetToSteal = null;
+
+  for (const p of room.players) {
+    if (p.id !== botId && p.exposedCards && p.exposedCards.some(c => c.value === drawnVal)) {
+      targetToSteal = p;
+      break;
+    }
+  }
+
+  if (targetToSteal) {
+    // El bot detecta la oportunidad y ejecuta el robo tras 900ms
+    room.botActionTimeout = setTimeout(() => {
+      if (room.status !== 'playing') return;
+      const stealRes = room.stealCards(botId, targetToSteal.id, drawnVal);
+      if (stealRes.success) {
+        broadcastRoom(room, 'cards_stolen', {
+          ...stealRes,
+          thiefId: botId,
+          thiefName: activePlayer.name,
+          thiefToken: activePlayer.token,
+          targetId: targetToSteal.id,
+          targetName: targetToSteal.name,
+          targetToken: targetToSteal.token,
+          value: drawnVal
+        });
+
+        setTimeout(() => {
+          io.to(room.code).emit('player_reaction', { playerId: botId, emoji: Math.random() < 0.5 ? '🔥' : '😈' });
+        }, 500);
+      }
+
+      decideBotNextStep(room, botId);
+    }, 900);
+  } else {
+    decideBotNextStep(room, botId);
+  }
+}
+
+function decideBotNextStep(room, botId) {
+  room.botActionTimeout = setTimeout(() => {
+    if (!room || room.status !== 'playing') return;
+    const activePlayer = room.getCurrentPlayer();
+    if (!activePlayer || activePlayer.id !== botId || !activePlayer.isBot) return;
+
+    // Si aún no tiene al menos 3 números diferentes, está obligado a robar otra carta
+    if (!room.turnState.canStop) {
+      runBotAction(room, botId);
+      return;
+    }
+
+    // Heurística de riesgo calculada:
+    const drawn = room.turnState.drawnThisTurn;
+    const uniqueValues = new Set(drawn.map(c => c.value));
+    const uniqueCount = uniqueValues.size;
+    const sumPoints = drawn.reduce((acc, c) => acc + c.value, 0);
+
+    let shouldStop = false;
+
+    if (uniqueCount >= 5) {
+      // 5 o más números diferentes: riesgo altísimo de repetir
+      shouldStop = Math.random() < 0.90;
+    } else if (uniqueCount === 4) {
+      if (sumPoints >= 16) {
+        shouldStop = Math.random() < 0.85;
+      } else {
+        shouldStop = Math.random() < 0.65;
+      }
+    } else if (uniqueCount === 3) {
+      if (sumPoints >= 16) {
+        shouldStop = Math.random() < 0.60;
+      } else {
+        shouldStop = Math.random() < 0.35;
+      }
+    }
+
+    // Si el mazo se está terminando (<= 4 cartas), asegurar puntos
+    if (room.deck.length <= 4) {
+      shouldStop = true;
+    }
+
+    if (shouldStop) {
+      const stopRes = room.stopTurn(botId);
+      if (stopRes.success) {
+        broadcastRoom(room, 'turn_stopped');
+        if (Math.random() < 0.4) {
+          setTimeout(() => {
+            io.to(room.code).emit('player_reaction', { playerId: botId, emoji: '👏' });
+          }, 350);
+        }
+        checkBotTurn(room);
+      }
+    } else {
+      runBotAction(room, botId);
+    }
+  }, 1200);
+}
+
 io.on('connection', (socket) => {
   let currentRoomCode = null;
   let currentPlayerToken = null;
@@ -68,6 +221,7 @@ io.on('connection', (socket) => {
       socket.join(room.code);
       socket.emit('reconnect_success', { state: room.getStateFor(socket.id) });
       broadcastRoom(room);
+      checkBotTurn(room);
     } else {
       socket.emit('reconnect_failed', { message: 'No se encontró la sesión previa' });
     }
@@ -141,6 +295,70 @@ io.on('connection', (socket) => {
     }
 
     broadcastRoom(room, 'game_started');
+    checkBotTurn(room);
+  });
+
+  // Jugar contra la máquina directamente (Modo Solitario 1 vs 1)
+  socket.on('play_vs_bot', ({ playerName, avatar, playerToken, deckSize }) => {
+    let code = generateRoomCode();
+    while (rooms.has(code)) {
+      code = generateRoomCode();
+    }
+
+    const room = new PelusasRoom(code, socket.id, playerName, avatar, playerToken);
+    rooms.set(code, room);
+    currentRoomCode = code;
+    currentPlayerToken = playerToken;
+    socket.join(code);
+
+    const size = Number(deckSize) || 50;
+    room.setDeckSize(size, socket.id);
+
+    // Agregar el bot
+    room.addBot('Pelusabot 🤖');
+
+    // Iniciar la partida
+    room.startGame(socket.id);
+
+    socket.emit('room_created', { roomCode: code, state: room.getStateFor(socket.id) });
+    broadcastRoom(room, 'game_started');
+    checkBotTurn(room);
+  });
+
+  // Agregar bot en sala de espera
+  socket.on('add_bot', () => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    if (!room.isHostPlayer(socket.id)) {
+      return socket.emit('error_msg', { message: 'Solo el anfitrión puede agregar bots' });
+    }
+
+    const res = room.addBot();
+    if (!res.success) {
+      return socket.emit('error_msg', { message: res.error });
+    }
+
+    broadcastRoom(room, 'player_joined', { player: res.player });
+  });
+
+  // Retirar bot en sala de espera
+  socket.on('remove_bot', ({ botId }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    if (!room.isHostPlayer(socket.id)) {
+      return socket.emit('error_msg', { message: 'Solo el anfitrión puede retirar bots' });
+    }
+
+    const res = room.removeBot(botId, socket.id);
+    if (!res.success) {
+      return socket.emit('error_msg', { message: res.error });
+    }
+
+    broadcastRoom(room);
   });
 
   // Robar carta del montón de polvo
@@ -165,6 +383,7 @@ io.on('connection', (socket) => {
       setTimeout(() => {
         room.advanceTurn();
         broadcastRoom(room, 'turn_changed');
+        checkBotTurn(room);
       }, 1500);
     }
   });
@@ -207,6 +426,7 @@ io.on('connection', (socket) => {
     }
 
     broadcastRoom(room, 'turn_stopped');
+    checkBotTurn(room);
   });
 
   // Reacciones en vivo
@@ -245,18 +465,27 @@ io.on('connection', (socket) => {
     socket.leave(currentRoomCode);
     socket.emit('left_game_success');
 
-    if (res.roomEmpty) {
+    if (res.roomEmpty || !room.players.some(p => !p.isBot)) {
+      if (room.botActionTimeout) {
+        clearTimeout(room.botActionTimeout);
+        room.botActionTimeout = null;
+      }
       rooms.delete(currentRoomCode);
       return;
     }
 
     if (res.gameEnded) {
+      if (room.botActionTimeout) {
+        clearTimeout(room.botActionTimeout);
+        room.botActionTimeout = null;
+      }
       broadcastRoom(room, 'gameover', res);
     } else {
       broadcastRoom(room, 'player_left_friendly', {
         playerName: res.playerName,
         message: res.message
       });
+      checkBotTurn(room);
     }
   });
 
@@ -265,6 +494,11 @@ io.on('connection', (socket) => {
     if (!currentRoomCode) return;
     const room = rooms.get(currentRoomCode);
     if (!room) return;
+
+    if (room.botActionTimeout) {
+      clearTimeout(room.botActionTimeout);
+      room.botActionTimeout = null;
+    }
 
     const res = room.endGameByHost(socket.id);
     if (!res.success) {
@@ -281,6 +515,11 @@ io.on('connection', (socket) => {
       if (room) {
         room.markDisconnected(socket.id);
         broadcastRoom(room);
+        const anyHumanConnected = room.players.some(p => !p.isBot && p.connected);
+        if (!anyHumanConnected && room.botActionTimeout) {
+          clearTimeout(room.botActionTimeout);
+          room.botActionTimeout = null;
+        }
       }
     }
   });
