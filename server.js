@@ -100,7 +100,13 @@ function runBotAction(room, botId) {
   if (res.busted) {
     if (Math.random() < 0.45) {
       setTimeout(() => {
-        io.to(room.code).emit('player_reaction', { playerId: botId, emoji: Math.random() < 0.5 ? '😱' : '💨' });
+        io.to(room.code).emit('player_reaction', {
+          playerId: botId,
+          playerName: activePlayer.name,
+          avatar: activePlayer.avatar,
+          isBot: true,
+          emoji: Math.random() < 0.5 ? '😱' : '💨'
+        });
       }, 350);
     }
     setTimeout(() => {
@@ -151,7 +157,13 @@ function runBotAction(room, botId) {
         });
 
         setTimeout(() => {
-          io.to(room.code).emit('player_reaction', { playerId: botId, emoji: Math.random() < 0.5 ? '🔥' : '😈' });
+          io.to(room.code).emit('player_reaction', {
+            playerId: botId,
+            playerName: activePlayer.name,
+            avatar: activePlayer.avatar,
+            isBot: true,
+            emoji: Math.random() < 0.5 ? '🔥' : '😈'
+          });
         }, 500);
       }
 
@@ -205,7 +217,13 @@ function decideBotNextStep(room, botId) {
         broadcastRoom(room, 'turn_stopped');
         if (Math.random() < 0.4) {
           setTimeout(() => {
-            io.to(room.code).emit('player_reaction', { playerId: botId, emoji: '👏' });
+            io.to(room.code).emit('player_reaction', {
+              playerId: botId,
+              playerName: activePlayer.name,
+              avatar: activePlayer.avatar,
+              isBot: true,
+              emoji: '👏'
+            });
           }, 350);
         }
         checkBotTurn(room);
@@ -463,8 +481,12 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
+    const sender = room.players.find(p => p.id === socket.id);
     io.to(currentRoomCode).emit('player_reaction', {
       playerId: socket.id,
+      playerName: sender ? sender.name : 'Jugador',
+      avatar: sender ? sender.avatar : '👤',
+      isBot: sender ? !!sender.isBot : false,
       emoji
     });
   });

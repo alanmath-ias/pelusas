@@ -300,8 +300,9 @@ socket.on('turn_stopped', () => {
   sounds.playStop();
 });
 
-socket.on('player_reaction', ({ playerId, emoji }) => {
-  triggerPlayerReaction(playerId, emoji);
+socket.on('player_reaction', (data) => {
+  if (!data) return;
+  triggerPlayerReaction(data.playerId, data.emoji, data);
 });
 
 socket.on('error_msg', ({ message }) => {
@@ -995,23 +996,104 @@ btnStopTurn.onclick = () => {
 reactionButtons.forEach(btn => {
   btn.onclick = () => {
     const emoji = btn.getAttribute('data-emoji');
+    if (!emoji) return;
+
+    // Feedback táctil instantáneo en el botón
+    btn.style.transform = 'scale(0.82)';
+    setTimeout(() => { btn.style.transform = ''; }, 160);
+
     socket.emit('send_reaction', { emoji });
   };
 });
 
-function triggerPlayerReaction(playerId, emoji) {
+function triggerPlayerReaction(playerId, emoji, senderData = {}) {
+  const container = document.getElementById('floating-reactions-container');
+  if (!container) return;
+
+  const isMe = (playerId === myPlayerId);
+  let authorName = senderData.playerName;
+  let isBot = Boolean(senderData.isBot);
+
+  if (!authorName) {
+    if (isMe) {
+      authorName = myPlayerName || 'Tú';
+    } else if (currentRoom && currentRoom.players) {
+      const p = currentRoom.players.find(pl => pl.id === playerId);
+      if (p) {
+        authorName = p.name;
+        isBot = Boolean(p.isBot);
+      }
+    }
+  }
+  if (!authorName) authorName = 'Jugador';
+
+  // Animación sutil de "celebración" en la tarjeta/dock del jugador emisor
   let targetBox = document.getElementById(`player-card-${playerId}`);
-  if (playerId === myPlayerId) {
+  if (isMe) {
     targetBox = document.getElementById('my-player-dock');
   }
-  if (!targetBox) return;
+  if (targetBox) {
+    targetBox.classList.remove('sender-reacted');
+    void targetBox.offsetWidth; // reiniciar animación
+    targetBox.classList.add('sender-reacted');
+    setTimeout(() => targetBox.classList.remove('sender-reacted'), 480);
+  }
 
-  const bubble = document.createElement('div');
-  bubble.className = 'reaction-bubble';
-  bubble.innerText = emoji;
-  targetBox.appendChild(bubble);
+  // Carriles laterales:
+  // - Dejamos totalmente despejada la zona central de juego (23% - 77%) para no desconcentrar con las cartas
+  // - El jugador local viaja preferentemente por el lateral derecho (85% de probabilidad)
+  // - Los rivales/bots viajan preferentemente por el lateral izquierdo (85% de probabilidad)
+  let lane = 'right';
+  if (isMe) {
+    lane = Math.random() < 0.85 ? 'right' : 'left';
+  } else {
+    lane = Math.random() < 0.85 ? 'left' : 'right';
+  }
 
-  setTimeout(() => bubble.remove(), 2200);
+  let leftPercent;
+  if (lane === 'left') {
+    leftPercent = (3 + Math.random() * 18).toFixed(1); // 3% a 21%
+  } else {
+    leftPercent = (78 + Math.random() * 16).toFixed(1); // 78% a 94%
+  }
+
+  // Derivas horizontales orgánicas para efecto de burbuja ascendente
+  const drift1 = ((Math.random() - 0.5) * 36).toFixed(1);
+  const drift2 = ((Math.random() - 0.5) * 44).toFixed(1);
+  const drift3 = ((Math.random() - 0.5) * 38).toFixed(1);
+  const drift4 = ((Math.random() - 0.5) * 28).toFixed(1);
+  const duration = (2.9 + Math.random() * 0.7).toFixed(2); // 2.9s a 3.6s
+
+  const reactionEl = document.createElement('div');
+  reactionEl.className = 'floating-reaction';
+  reactionEl.style.left = `${leftPercent}%`;
+  reactionEl.style.animationDuration = `${duration}s`;
+  reactionEl.style.setProperty('--drift-1', `${drift1}px`);
+  reactionEl.style.setProperty('--drift-2', `${drift2}px`);
+  reactionEl.style.setProperty('--drift-3', `${drift3}px`);
+  reactionEl.style.setProperty('--drift-4', `${drift4}px`);
+
+  // Emoticono animado
+  const emojiEl = document.createElement('span');
+  emojiEl.className = 'floating-reaction-emoji';
+  emojiEl.innerText = emoji;
+
+  // Etiqueta con el nombre del emisor (o "Tú" si es el jugador local)
+  const authorEl = document.createElement('span');
+  authorEl.className = `floating-reaction-author${isBot ? ' is-bot' : ''}`;
+  authorEl.innerText = isMe ? 'Tú' : authorName;
+
+  reactionEl.appendChild(emojiEl);
+  reactionEl.appendChild(authorEl);
+
+  container.appendChild(reactionEl);
+
+  // Auto-eliminación tras completar la trayectoria hacia el cielo de la pantalla
+  setTimeout(() => {
+    if (reactionEl.parentNode) {
+      reactionEl.remove();
+    }
+  }, duration * 1000 + 150);
 }
 
 function triggerScreenShake() {
