@@ -176,60 +176,65 @@ function runBotAction(room, botId) {
 
 function decideBotNextStep(room, botId) {
   room.botActionTimeout = setTimeout(() => {
-    if (!room || room.status !== 'playing') return;
-    const activePlayer = room.getCurrentPlayer();
-    if (!activePlayer || activePlayer.id !== botId || !activePlayer.isBot) return;
+    try {
+      if (!room || room.status !== 'playing') return;
+      const activePlayer = room.getCurrentPlayer();
+      if (!activePlayer || activePlayer.id !== botId || !activePlayer.isBot) return;
 
-    // Si aún no tiene al menos 3 números diferentes, está obligado a robar otra carta
-    if (!room.turnState.canStop) {
-      runBotAction(room, botId);
-      return;
-    }
-
-    // Heurística de riesgo calculada con probabilidades matemáticas reales:
-    const probs = room.calculateTurnProbabilities();
-    const sumPoints = drawn.reduce((acc, c) => acc + c.value, 0);
-
-    let shouldStop = false;
-
-    if (probs.bustPercent >= 60) {
-      // Riesgo extremo (≥ 60% de derrota): el bot se planta la gran mayoría de las veces
-      shouldStop = Math.random() < 0.92;
-    } else if (probs.bustPercent >= 40) {
-      // Riesgo alto (40-59% de derrota)
-      shouldStop = sumPoints >= 14 ? (Math.random() < 0.85) : (Math.random() < 0.65);
-    } else if (probs.bustPercent >= 25) {
-      // Riesgo medio (25-39% de derrota)
-      shouldStop = sumPoints >= 16 ? (Math.random() < 0.65) : (Math.random() < 0.35);
-    } else {
-      // Riesgo bajo (< 25%): roba a menos que ya tenga demasiados puntos
-      shouldStop = sumPoints >= 24 && Math.random() < 0.50;
-    }
-
-    // Si el mazo se está terminando (<= 4 cartas), asegurar puntos de inmediato
-    if (room.deck.length <= 4) {
-      shouldStop = true;
-    }
-
-    if (shouldStop) {
-      const stopRes = room.stopTurn(botId);
-      if (stopRes.success) {
-        broadcastRoom(room, 'turn_stopped');
-        if (Math.random() < 0.4) {
-          setTimeout(() => {
-            io.to(room.code).emit('player_reaction', {
-              playerId: botId,
-              playerName: activePlayer.name,
-              avatar: activePlayer.avatar,
-              isBot: true,
-              emoji: '👏'
-            });
-          }, 350);
-        }
-        checkBotTurn(room);
+      // Si aún no tiene al menos 3 números diferentes, está obligado a robar otra carta
+      if (!room.turnState.canStop) {
+        runBotAction(room, botId);
+        return;
       }
-    } else {
-      runBotAction(room, botId);
+
+      // Heurística de riesgo calculada con probabilidades matemáticas reales:
+      const probs = room.calculateTurnProbabilities();
+      const drawnCards = room.turnState.drawnThisTurn || [];
+      const sumPoints = drawnCards.reduce((acc, c) => acc + c.value, 0);
+
+      let shouldStop = false;
+
+      if (probs.bustPercent >= 60) {
+        // Riesgo extremo (≥ 60% de derrota): el bot se planta la gran mayoría de las veces
+        shouldStop = Math.random() < 0.92;
+      } else if (probs.bustPercent >= 40) {
+        // Riesgo alto (40-59% de derrota)
+        shouldStop = sumPoints >= 14 ? (Math.random() < 0.85) : (Math.random() < 0.65);
+      } else if (probs.bustPercent >= 25) {
+        // Riesgo medio (25-39% de derrota)
+        shouldStop = sumPoints >= 16 ? (Math.random() < 0.65) : (Math.random() < 0.35);
+      } else {
+        // Riesgo bajo (< 25%): roba a menos que ya tenga demasiados puntos
+        shouldStop = sumPoints >= 24 && Math.random() < 0.50;
+      }
+
+      // Si el mazo se está terminando (<= 4 cartas), asegurar puntos de inmediato
+      if (room.deck.length <= 4) {
+        shouldStop = true;
+      }
+
+      if (shouldStop) {
+        const stopRes = room.stopTurn(botId);
+        if (stopRes.success) {
+          broadcastRoom(room, 'turn_stopped');
+          if (Math.random() < 0.4) {
+            setTimeout(() => {
+              io.to(room.code).emit('player_reaction', {
+                playerId: botId,
+                playerName: activePlayer.name,
+                avatar: activePlayer.avatar,
+                isBot: true,
+                emoji: '👏'
+              });
+            }, 350);
+          }
+          checkBotTurn(room);
+        }
+      } else {
+        runBotAction(room, botId);
+      }
+    } catch (err) {
+      console.error('Error en decideBotNextStep:', err);
     }
   }, 1200);
 }
