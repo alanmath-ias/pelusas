@@ -7,9 +7,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=3.3">
+  <link rel="stylesheet" href="/css/style.css?v=3.4">
 </head>
 <body>
+  <!-- INTRO ANIMADA / SPLASH SCREEN DE ENTRADA -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-content">
+      <div class="splash-badge">JUEGOS ALANMATH</div>
+      <div class="splash-mascot-container" id="splash-mascot-box">
+        <div class="splash-pelusa" id="splash-pelusa-icon">
+          <!-- Renderizado dinámicamente con la mascota de Pelusas -->
+        </div>
+      </div>
+      <h1 class="splash-title">PELUSAS</h1>
+      <p class="splash-subtitle">¡Arriésgate, roba pelusas y cuídate del viento! 💨</p>
+      <div class="splash-loading-bar">
+        <div class="splash-loading-fill"></div>
+      </div>
+      <span class="splash-skip-hint">Toca en cualquier parte para continuar</span>
+    </div>
+  </div>
+
   <!-- Fondos dinámicos luminosos -->
   <div class="bg-glow bg-glow-1"></div>
   <div class="bg-glow bg-glow-2"></div>
@@ -17,7 +35,7 @@
 
   <!-- PANTALLA 1: LOBBY -->
   <div id="screen-lobby" class="screen-container">
-    <header class="lobby-header">
+    <header class="lobby-header anim-stagger-1">
       <div class="brand-badge">JUEGOS ALANMATH</div>
       <h1 class="game-title">Pelusas</h1>
       <p class="game-tagline">El juego de cartas en línea para arriesgarte y robar pelusas</p>
@@ -289,15 +307,22 @@
     <div class="card-glass gameover-card">
       <div class="trophy-badge">🏆</div>
       <h2>¡Fin de la Partida!</h2>
-      <p class="gameover-desc">Se ha terminado el montón de polvo. Estos son los resultados finales:</p>
+      <p class="gameover-desc" id="gameover-desc">Se ha terminado el montón de polvo. Estos son los resultados finales:</p>
 
       <div id="podium-list" class="podium-container">
         <!-- Filas del podio -->
       </div>
 
+      <div class="gameover-countdown" id="gameover-countdown-box">
+        <span id="gameover-countdown-text">⏱️ Volviendo al inicio en <strong>45s</strong></span>
+      </div>
+
       <div class="gameover-actions">
         <button id="btn-play-again" class="btn btn-primary btn-large">
-          🔄 Jugar Otra Partida
+          🚀 Jugar Otra Partida
+        </button>
+        <button id="btn-go-home" class="btn btn-secondary btn-large">
+          🏠 Volver al Menú Principal
         </button>
       </div>
     </div>
@@ -320,8 +345,8 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/pelusas-cards.js?v=3.3"></script>
-  <script src="/js/audio.js?v=3.3"></script>
-  <script src="/js/client.js?v=3.3"></script>
+  <script src="/js/pelusas-cards.js?v=3.4"></script>
+  <script src="/js/audio.js?v=3.4"></script>
+  <script src="/js/client.js?v=3.4"></script>
 </body>
 </html>

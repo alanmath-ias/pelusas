@@ -104,6 +104,7 @@ const gameLogsList = document.getElementById('game-logs-list');
 const reactionButtons = document.querySelectorAll('.reaction-btn');
 
 document.addEventListener('DOMContentLoaded', () => {
+  initSplashScreen();
   buildAvatarSelector();
 
   // Si se entra por un enlace de invitación con ?room=...
@@ -1018,10 +1019,61 @@ function triggerScreenShake() {
   setTimeout(() => document.body.classList.remove('screen-shake'), 600);
 }
 
+function initSplashScreen() {
+  const splash = document.getElementById('splash-screen');
+  const mascotIcon = document.getElementById('splash-pelusa-icon');
+  if (!splash) return;
+
+  // Renderizar un avatar animado para la mascota de bienvenida
+  if (mascotIcon && typeof renderPelusaAvatar === 'function') {
+    mascotIcon.innerHTML = renderPelusaAvatar(1, { size: 'large' });
+  }
+
+  let splashDismissed = false;
+  const dismissSplash = () => {
+    if (splashDismissed) return;
+    splashDismissed = true;
+    splash.classList.add('fade-out');
+
+    // Activar animaciones de entrada en cascada en el lobby
+    const lobbyHeader = document.querySelector('.lobby-header');
+    const lobbyForm = document.getElementById('lobby-form-area');
+    if (lobbyHeader) lobbyHeader.classList.add('anim-stagger-1');
+    if (lobbyForm) lobbyForm.classList.add('anim-stagger-2');
+
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 600);
+  };
+
+  // Si entra por un link directo de invitación o si ya vio la intro en esta sesión
+  const hasSeenIntro = sessionStorage.getItem('pelusa_intro_seen');
+  const hasInviteLink = !!roomParam;
+
+  if (hasInviteLink) {
+    // Si viene por invitación de WhatsApp, transición rápida (500ms) para no demorar la partida
+    setTimeout(dismissSplash, 500);
+  } else if (hasSeenIntro) {
+    // Si ya vio la intro en esta sesión de navegación, transición rápida
+    setTimeout(dismissSplash, 550);
+  } else {
+    // Primera entrada: experiencia de bienvenida cinematográfica de 1.8 segundos
+    sessionStorage.setItem('pelusa_intro_seen', 'true');
+    setTimeout(dismissSplash, 1850);
+  }
+
+  // Tocar en cualquier parte descarta la intro inmediatamente
+  splash.addEventListener('click', dismissSplash, { once: true });
+}
+
 function renderGameOver(state) {
   screenGame.style.display = 'none';
   screenGameOver.style.display = 'flex';
   sounds.playVictory();
+
+  // Limpiar la sala activa de la memoria local para que futuras visitas no queden atrapadas en la partida terminada
+  sessionStorage.removeItem('pelusa_active_room');
+  localStorage.removeItem('pelusa_active_room');
 
   const podium = document.getElementById('podium-list');
   podium.innerHTML = '';
@@ -1029,22 +1081,57 @@ function renderGameOver(state) {
   const ranked = [...state.players].sort((a,b) => b.score - a.score);
   ranked.forEach((p, index) => {
     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎖️';
+    const isMe = p.id === myPlayerId || p.token === playerToken;
     const row = document.createElement('div');
-    row.className = `podium-row place-${index + 1} ${p.id === myPlayerId ? 'my-row' : ''}`;
+    row.className = `podium-row place-${index + 1} ${isMe ? 'my-row' : ''}`;
     row.innerHTML = `
       <div class="podium-rank">${medal} #${index + 1}</div>
       <div class="podium-avatar">${renderPelusaAvatar(p.avatar || 1, { size: 'tiny' })}</div>
-      <div class="podium-name">${escapeHtml(p.name)} ${p.id === myPlayerId ? '(Tú)' : ''}</div>
+      <div class="podium-name">${escapeHtml(p.name)} ${isMe ? '<small>(Tú)</small>' : ''} ${p.isBot ? '<span class="badge-bot">🤖</span>' : ''}</div>
       <div class="podium-score">${p.score} pts</div>
     `;
     podium.appendChild(row);
   });
 
-  document.getElementById('btn-play-again').onclick = () => {
+  // Temporizador para volver automáticamente al inicio tras 45s de inactividad
+  let countdownSecs = 45;
+  const countdownText = document.getElementById('gameover-countdown-text');
+
+  if (window.gameoverCountdownInterval) {
+    clearInterval(window.gameoverCountdownInterval);
+  }
+
+  const updateCountdownUI = () => {
+    if (countdownText) {
+      countdownText.innerHTML = `⏱️ Volviendo al inicio en <strong>${countdownSecs}s</strong>`;
+    }
+  };
+  updateCountdownUI();
+
+  const returnToLobbyHome = () => {
+    if (window.gameoverCountdownInterval) {
+      clearInterval(window.gameoverCountdownInterval);
+    }
     sessionStorage.removeItem('pelusa_active_room');
     localStorage.removeItem('pelusa_active_room');
-    window.location.reload();
+    window.location.href = window.location.origin + window.location.pathname;
   };
+
+  window.gameoverCountdownInterval = setInterval(() => {
+    countdownSecs--;
+    if (countdownSecs <= 0) {
+      clearInterval(window.gameoverCountdownInterval);
+      returnToLobbyHome();
+    } else {
+      updateCountdownUI();
+    }
+  }, 1000);
+
+  const btnPlayAgain = document.getElementById('btn-play-again');
+  const btnGoHome = document.getElementById('btn-go-home');
+
+  if (btnPlayAgain) btnPlayAgain.onclick = returnToLobbyHome;
+  if (btnGoHome) btnGoHome.onclick = returnToLobbyHome;
 }
 
 function escapeHtml(text) {

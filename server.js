@@ -49,6 +49,20 @@ function broadcastRoom(room, eventName = 'room_state', extraData = null) {
   });
 }
 
+// Auto-limpieza de salas finalizadas tras 15 minutos para liberar memoria
+function scheduleRoomCleanup(roomCode) {
+  setTimeout(() => {
+    if (rooms.has(roomCode)) {
+      const r = rooms.get(roomCode);
+      if (r && r.status === 'gameover') {
+        if (r.botActionTimeout) clearTimeout(r.botActionTimeout);
+        rooms.delete(roomCode);
+        console.log(`🧹 Sala ${roomCode} eliminada por inactividad tras finalizar.`);
+      }
+    }
+  }, 15 * 60 * 1000);
+}
+
 // --- Control Inteligente de Turnos de Bots (IA) ---
 function checkBotTurn(room) {
   if (!room || room.status !== 'playing') return;
@@ -99,7 +113,12 @@ function runBotAction(room, botId) {
 
   // Si el mazo se agotó y terminó la partida
   if (res.gameEnded) {
+    if (room.botActionTimeout) {
+      clearTimeout(room.botActionTimeout);
+      room.botActionTimeout = null;
+    }
     broadcastRoom(room, 'gameover', room.endGame());
+    scheduleRoomCleanup(room.code);
     return;
   }
 
@@ -207,6 +226,10 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode.trim().toUpperCase());
     if (!room) {
       return socket.emit('reconnect_failed', { message: 'La sala ya no existe' });
+    }
+
+    if (room.status === 'gameover') {
+      return socket.emit('reconnect_failed', { message: 'La partida anterior ya ha concluido' });
     }
 
     const player = room.reconnectPlayer(socket.id, playerToken);
@@ -373,6 +396,16 @@ io.on('connection', (socket) => {
       gameEnded: res.gameEnded
     });
 
+    if (res.gameEnded) {
+      if (room.botActionTimeout) {
+        clearTimeout(room.botActionTimeout);
+        room.botActionTimeout = null;
+      }
+      broadcastRoom(room, 'gameover', room.endGame());
+      scheduleRoomCleanup(room.code);
+      return;
+    }
+
     // Si se pasó (busted), esperar 1.5s para ver el efecto y avanzar el turno notificando a todos
     if (res.busted) {
       setTimeout(() => {
@@ -475,6 +508,7 @@ io.on('connection', (socket) => {
         room.botActionTimeout = null;
       }
       broadcastRoom(room, 'gameover', res);
+      scheduleRoomCleanup(room.code);
     } else {
       broadcastRoom(room, 'player_left_friendly', {
         playerName: res.playerName,
@@ -501,6 +535,7 @@ io.on('connection', (socket) => {
     }
 
     broadcastRoom(room, 'gameover', res);
+    scheduleRoomCleanup(room.code);
   });
 
   // Desconexión temporal (ej: al pasar a WhatsApp)
