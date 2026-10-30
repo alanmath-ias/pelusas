@@ -154,6 +154,40 @@
         </div>
       </div>
 
+      <!-- Selector de reglas y ayudas en vivo (Configuración del Anfitrión) -->
+      <div class="rules-config-section" id="rules-config-section">
+        <div class="config-label-row">
+          <span class="config-title">⚙️ Opciones de la Partida:</span>
+          <span id="rules-config-hint" class="config-host-hint">Configura el anfitrión</span>
+        </div>
+
+        <div class="rules-toggle-grid">
+          <!-- Toggle 1: Estadísticas y probabilidades -->
+          <div class="rule-toggle-row">
+            <div class="rule-toggle-info">
+              <span class="rule-toggle-title">📊 Estadísticas de juego</span>
+              <span class="rule-toggle-desc">Probabilidades de acierto, riesgo y avisos de robo en vivo</span>
+            </div>
+            <div class="rule-pill-selector" id="stats-pill-selector">
+              <button type="button" class="rule-pill-btn active" data-stats="true">Activas</button>
+              <button type="button" class="rule-pill-btn" data-stats="false">Ocultas</button>
+            </div>
+          </div>
+
+          <!-- Toggle 2: Puntaje de jugadores en vivo -->
+          <div class="rule-toggle-row">
+            <div class="rule-toggle-info">
+              <span class="rule-toggle-title">🔒 Puntaje en vivo</span>
+              <span class="rule-toggle-desc">Mostrar puntos (pts) en las tarjetas o mantener misterio</span>
+            </div>
+            <div class="rule-pill-selector" id="score-pill-selector">
+              <button type="button" class="rule-pill-btn active" data-score="true">Visible</button>
+              <button type="button" class="rule-pill-btn" data-score="false">Oculto</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="start-action-row">
         <button id="btn-start-game" class="btn btn-accent btn-large" style="display: none;">
           ¡Iniciar Partida!
@@ -175,6 +209,7 @@
       </div>
       <div class="topbar-right">
         <button id="btn-sound-toggle" class="icon-btn" title="Silenciar / Activar Sonido">🔊</button>
+        <button id="btn-room-options" class="icon-btn" title="Opciones de la Partida (Anfitrión)" style="display: none;">⚙️</button>
         <button id="btn-leave-game" class="icon-btn btn-leave-game" title="Salir o terminar partida">🚪</button>
       </div>
     </header>
@@ -270,7 +305,7 @@
           <span class="icon">🔒</span>
           <div>
             <div class="dock-val" id="my-safe-score">0</div>
-            <div class="dock-lbl">Puntos Seguros (<span id="my-safe-count">0</span>)</div>
+            <div class="dock-lbl" id="my-dock-score-lbl">Puntos Seguros (<span id="my-safe-count">0</span>)</div>
           </div>
         </div>
 
@@ -342,6 +377,47 @@
 
       <div class="leave-actions-container" id="leave-actions-box">
         <!-- Rellenado dinámicamente según sea Anfitrión o Invitado -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Opciones de Juego en Vivo (Anfitrión) -->
+  <div id="modal-game-options" class="modal-overlay" style="display: none;">
+    <div class="card-glass leave-modal-card">
+      <div class="leave-icon">⚙️</div>
+      <h2>Opciones de la Partida</h2>
+      <p class="leave-modal-desc">
+        Como anfitrión, puedes cambiar la visualización de estadísticas y puntajes en cualquier momento:
+      </p>
+
+      <div class="rules-toggle-grid" style="margin-bottom: 1.4rem; text-align: left;">
+        <div class="rule-toggle-row">
+          <div class="rule-toggle-info">
+            <span class="rule-toggle-title">📊 Estadísticas de juego</span>
+            <span class="rule-toggle-desc">Probabilidad de acierto y medidor de riesgo en vivo</span>
+          </div>
+          <div class="rule-pill-selector" id="ingame-stats-pill-selector">
+            <button type="button" class="rule-pill-btn active" data-stats="true">Activas</button>
+            <button type="button" class="rule-pill-btn" data-stats="false">Ocultas</button>
+          </div>
+        </div>
+
+        <div class="rule-toggle-row">
+          <div class="rule-toggle-info">
+            <span class="rule-toggle-title">🔒 Puntaje en vivo</span>
+            <span class="rule-toggle-desc">Mostrar puntos (pts) en las tarjetas o mantener misterio</span>
+          </div>
+          <div class="rule-pill-selector" id="ingame-score-pill-selector">
+            <button type="button" class="rule-pill-btn active" data-score="true">Visible</button>
+            <button type="button" class="rule-pill-btn" data-score="false">Oculto</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="leave-actions-container">
+        <button type="button" id="btn-close-options" class="btn btn-secondary btn-large" style="width: 100%;">
+          Guardar y Cerrar
+        </button>
       </div>
     </div>
   </div>

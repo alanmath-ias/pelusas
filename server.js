@@ -93,7 +93,7 @@ function runBotAction(room, botId) {
   broadcastRoom(room, 'card_drawn', {
     card: res.card,
     busted: res.busted,
-    gameEnded: res.gameEnded
+    isLastCard: res.isLastCard
   });
 
   // Si se pasa (busted)
@@ -111,20 +111,17 @@ function runBotAction(room, botId) {
     }
     setTimeout(() => {
       room.advanceTurn();
+      if (room.status === 'gameover') {
+        broadcastRoom(room, 'gameover', {
+          ranking: [...room.players].sort((a, b) => b.score - a.score),
+          winner: [...room.players].sort((a, b) => b.score - a.score)[0]
+        });
+        scheduleRoomCleanup(room.code);
+        return;
+      }
       broadcastRoom(room, 'turn_changed');
       checkBotTurn(room);
     }, 1500);
-    return;
-  }
-
-  // Si el mazo se agotó y terminó la partida
-  if (res.gameEnded) {
-    if (room.botActionTimeout) {
-      clearTimeout(room.botActionTimeout);
-      room.botActionTimeout = null;
-    }
-    broadcastRoom(room, 'gameover', room.endGame());
-    scheduleRoomCleanup(room.code);
     return;
   }
 
@@ -216,6 +213,19 @@ function decideBotNextStep(room, botId) {
       if (shouldStop) {
         const stopRes = room.stopTurn(botId);
         if (stopRes.success) {
+          if (room.status === 'gameover') {
+            if (room.botActionTimeout) {
+              clearTimeout(room.botActionTimeout);
+              room.botActionTimeout = null;
+            }
+            broadcastRoom(room, 'gameover', {
+              ranking: [...room.players].sort((a, b) => b.score - a.score),
+              winner: [...room.players].sort((a, b) => b.score - a.score)[0]
+            });
+            scheduleRoomCleanup(room.code);
+            return;
+          }
+
           broadcastRoom(room, 'turn_stopped');
           if (Math.random() < 0.4) {
             setTimeout(() => {
@@ -269,13 +279,15 @@ io.on('connection', (socket) => {
   });
 
   // Crear sala
-  socket.on('create_room', ({ playerName, avatar, playerToken }) => {
+  socket.on('create_room', ({ playerName, avatar, playerToken, showStats, showScore }) => {
     let code = generateRoomCode();
     while (rooms.has(code)) {
       code = generateRoomCode();
     }
 
     const room = new PelusasRoom(code, socket.id, playerName, avatar, playerToken);
+    if (typeof showStats === 'boolean') room.showStats = showStats;
+    if (typeof showScore === 'boolean') room.showScore = showScore;
     rooms.set(code, room);
     currentRoomCode = code;
     currentPlayerToken = playerToken;
@@ -340,7 +352,7 @@ io.on('connection', (socket) => {
   });
 
   // Jugar contra la máquina directamente (Modo Solitario 1 vs 1)
-  socket.on('play_vs_bot', ({ playerName, avatar, playerToken, deckSize }) => {
+  socket.on('play_vs_bot', ({ playerName, avatar, playerToken, deckSize, showStats, showScore }) => {
     let code = generateRoomCode();
     while (rooms.has(code)) {
       code = generateRoomCode();
@@ -354,6 +366,8 @@ io.on('connection', (socket) => {
 
     const size = Number(deckSize) || 50;
     room.setDeckSize(size, socket.id);
+    if (typeof showStats === 'boolean') room.showStats = showStats;
+    if (typeof showScore === 'boolean') room.showScore = showScore;
 
     // Agregar el bot
     room.addBot('Pelusabot 🤖');
@@ -416,26 +430,48 @@ io.on('connection', (socket) => {
     broadcastRoom(room, 'card_drawn', {
       card: res.card,
       busted: res.busted,
-      gameEnded: res.gameEnded
+      isLastCard: res.isLastCard
     });
-
-    if (res.gameEnded) {
-      if (room.botActionTimeout) {
-        clearTimeout(room.botActionTimeout);
-        room.botActionTimeout = null;
-      }
-      broadcastRoom(room, 'gameover', room.endGame());
-      scheduleRoomCleanup(room.code);
-      return;
-    }
 
     // Si se pasó (busted), esperar 1.5s para ver el efecto y avanzar el turno notificando a todos
     if (res.busted) {
       setTimeout(() => {
         room.advanceTurn();
+        if (room.status === 'gameover') {
+          broadcastRoom(room, 'gameover', {
+            ranking: [...room.players].sort((a, b) => b.score - a.score),
+            winner: [...room.players].sort((a, b) => b.score - a.score)[0]
+          });
+          scheduleRoomCleanup(room.code);
+          return;
+        }
         broadcastRoom(room, 'turn_changed');
         checkBotTurn(room);
       }, 1500);
+      return;
+    }
+
+    // Si fue la última carta del montón (no fue derrota), permitirle robar a rivales o plantarse.
+    // Como salvaguarda por inactividad prolongada, si no se planta tras 30 segundos, se planta automáticamente.
+    if (room.deck.length === 0) {
+      if (room.lastCardAutoStopTimeout) {
+        clearTimeout(room.lastCardAutoStopTimeout);
+      }
+      room.lastCardAutoStopTimeout = setTimeout(() => {
+        if (room.status === 'playing' && room.deck.length === 0) {
+          const curPlayer = room.getCurrentPlayer();
+          if (curPlayer && curPlayer.id === socket.id) {
+            room.stopTurn(socket.id);
+            if (room.status === 'gameover') {
+              broadcastRoom(room, 'gameover', {
+                ranking: [...room.players].sort((a, b) => b.score - a.score),
+                winner: [...room.players].sort((a, b) => b.score - a.score)[0]
+              });
+              scheduleRoomCleanup(room.code);
+            }
+          }
+        }
+      }, 30000);
     }
   });
 
@@ -471,9 +507,27 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoomCode);
     if (!room) return;
 
+    if (room.lastCardAutoStopTimeout) {
+      clearTimeout(room.lastCardAutoStopTimeout);
+      room.lastCardAutoStopTimeout = null;
+    }
+
     const res = room.stopTurn(socket.id);
     if (!res.success) {
       return socket.emit('error_msg', { message: res.error });
+    }
+
+    if (room.status === 'gameover') {
+      if (room.botActionTimeout) {
+        clearTimeout(room.botActionTimeout);
+        room.botActionTimeout = null;
+      }
+      broadcastRoom(room, 'gameover', {
+        ranking: [...room.players].sort((a, b) => b.score - a.score),
+        winner: [...room.players].sort((a, b) => b.score - a.score)[0]
+      });
+      scheduleRoomCleanup(room.code);
+      return;
     }
 
     broadcastRoom(room, 'turn_stopped');
@@ -508,6 +562,23 @@ io.on('connection', (socket) => {
     }
 
     broadcastRoom(room, 'deck_size_updated', { deckSize: room.deckSize });
+  });
+
+  // Configurar estadísticas y puntajes en vivo (solo anfitrión)
+  socket.on('set_game_config', ({ showStats, showScore }) => {
+    if (!currentRoomCode) return;
+    const room = rooms.get(currentRoomCode);
+    if (!room) return;
+
+    const res = room.setGameConfig({ showStats, showScore }, socket.id);
+    if (!res.success) {
+      return socket.emit('error_msg', { message: res.error });
+    }
+
+    broadcastRoom(room, 'game_config_updated', {
+      showStats: room.showStats,
+      showScore: room.showScore
+    });
   });
 
   // Retirarse amablemente de la partida

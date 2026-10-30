@@ -99,6 +99,10 @@ const leaveModalDesc = document.getElementById('leave-modal-desc');
 const leaveActionsBox = document.getElementById('leave-actions-box');
 const gameToastBanner = document.getElementById('game-toast-banner');
 const deckConfigHint = document.getElementById('deck-config-hint');
+const rulesConfigHint = document.getElementById('rules-config-hint');
+const btnRoomOptions = document.getElementById('btn-room-options');
+const modalGameOptions = document.getElementById('modal-game-options');
+const btnCloseOptions = document.getElementById('btn-close-options');
 
 // Medidor de probabilidades en tiempo real
 const turnProbabilityCard = document.getElementById('turn-probability-card');
@@ -283,12 +287,16 @@ socket.on('player_joined', (state) => {
   }
 });
 
-socket.on('card_drawn', ({ card, busted, gameEnded }) => {
+socket.on('card_drawn', ({ card, busted, isLastCard }) => {
   if (busted) {
     sounds.playBust();
     triggerScreenShake();
   } else {
     sounds.playDraw();
+  }
+
+  if (isLastCard && !busted) {
+    showToastBanner(`⚠️ ¡Última carta del montón (${card ? card.value : ''})! Roba a tus rivales si coincide o pulsa Plantarse para finalizar.`);
   }
 });
 
@@ -370,7 +378,13 @@ btnCreateRoom.onclick = () => {
   const name = inputPlayerName.value.trim() || 'Jugador 1';
   btnCreateRoom.disabled = true;
   btnCreateRoom.innerText = '⏳ Creando sala...';
-  socket.emit('create_room', { playerName: name, avatar: selectedAvatar, playerToken });
+
+  const statsBtn = document.querySelector('#stats-pill-selector .rule-pill-btn.active');
+  const scoreBtn = document.querySelector('#score-pill-selector .rule-pill-btn.active');
+  const showStats = statsBtn ? statsBtn.getAttribute('data-stats') !== 'false' : true;
+  const showScore = scoreBtn ? scoreBtn.getAttribute('data-score') !== 'false' : true;
+
+  socket.emit('create_room', { playerName: name, avatar: selectedAvatar, playerToken, showStats, showScore });
 };
 
 if (btnPlayVsBot) {
@@ -378,11 +392,19 @@ if (btnPlayVsBot) {
     const name = inputPlayerName.value.trim() || 'Jugador 1';
     btnPlayVsBot.disabled = true;
     btnPlayVsBot.innerText = '🤖 Preparando partida...';
+
+    const statsBtn = document.querySelector('#stats-pill-selector .rule-pill-btn.active');
+    const scoreBtn = document.querySelector('#score-pill-selector .rule-pill-btn.active');
+    const showStats = statsBtn ? statsBtn.getAttribute('data-stats') !== 'false' : true;
+    const showScore = scoreBtn ? scoreBtn.getAttribute('data-score') !== 'false' : true;
+
     socket.emit('play_vs_bot', {
       playerName: name,
       avatar: selectedAvatar,
       playerToken,
-      deckSize: 50
+      deckSize: 50,
+      showStats,
+      showScore
     });
   };
 }
@@ -468,6 +490,7 @@ function updateLobbyPlayers(players, hostId, hostToken) {
   }
 
   updateDeckPresetButtons(currentRoom?.deckSize || 110, isMeHost);
+  updateGameRulesUI(currentRoom?.showStats, currentRoom?.showScore, isMeHost);
 }
 
 btnStartGame.onclick = () => {
@@ -506,11 +529,21 @@ function renderGame(state) {
   // Mis datos
   const me = state.players.find(p => p.id === myPlayerId || p.token === playerToken);
   if (me) {
-    mySafeScore.innerText = me.safeScore;
+    const isScoreHidden = (state.showScore === false && state.status !== 'gameover');
+    mySafeScore.innerText = isScoreHidden ? '🔒' : (me.safeScore ?? 0);
     mySafeCount.innerText = me.safeCount;
+    const myDockLbl = document.getElementById('my-dock-score-lbl');
+    if (myDockLbl) {
+      myDockLbl.innerHTML = isScoreHidden
+        ? `Cartas Seguras (<span id="my-safe-count">${me.safeCount}</span>)`
+        : `Puntos Seguros (<span id="my-safe-count">${me.safeCount}</span>)`;
+    }
     myExposedCount.innerText = me.exposedCards.length;
     renderMyDockExposedCards(me.exposedCards);
   }
+
+  // Actualizar controles de opciones del anfitrión
+  updateGameRulesUI(state.showStats, state.showScore, state.isHost);
 
   // Cartas del turno con animación FLIP & Hero
   renderTurnCards(state.turnState.drawnThisTurn, state.turnState.lastDrawnCard, state.turnState.isBusted, state.currentTurnIndex);
@@ -527,7 +560,7 @@ function renderGame(state) {
   syncActionButtons();
 
   // Failsafe: Si es mi turno y no estoy en bust, garantizar que los botones se desbloqueen
-  if (isMyTurn && state.deckCount > 0 && !state.turnState.isBusted) {
+  if (isMyTurn && !state.turnState.isBusted) {
     safeSetTimeout(() => {
       isAnimatingCard = false;
       syncActionButtons();
@@ -541,6 +574,36 @@ function renderProbabilities(probs, isMyTurn, isBusted) {
   if (!turnProbabilityCard) return;
 
   const arenaHint = document.getElementById('arena-hint');
+
+  // Si el montón de cartas se agotó por completo
+  if (currentRoom && (currentRoom.deckCount || 0) === 0) {
+    turnProbabilityCard.style.display = 'none';
+    if (riskWarning) {
+      riskWarning.style.display = 'block';
+      riskWarning.innerHTML = '🏁 ¡Última carta tomada! Si coincide, roba al rival; luego pulsa Plantarse para finalizar.';
+    }
+    if (arenaHint) arenaHint.style.display = 'none';
+    return;
+  }
+
+  // Si el anfitrión desactivó las estadísticas de juego, ocultar medidor de riesgo y probabilidades
+  if (currentRoom && currentRoom.showStats === false) {
+    turnProbabilityCard.style.display = 'none';
+    if (riskWarning) riskWarning.style.display = 'none';
+    if (arenaHint) {
+      arenaHint.style.display = 'block';
+      arenaHint.innerHTML = '<span>Objetivo: ≥3 dif.</span>';
+    }
+    if (btnDrawCard && isMyTurn) {
+      btnDrawCard.classList.remove('btn-risk');
+      if ((currentRoom.deckCount || 0) > 0) {
+        btnDrawCard.innerHTML = '<span>🃏 Robar Pelusa</span>';
+      }
+    }
+    return;
+  }
+
+  turnProbabilityCard.style.display = '';
 
   if (isBusted) {
     turnProbabilityCard.className = 'turn-probability-card risk-extreme';
@@ -659,12 +722,17 @@ function renderOpponents(players, activeTurnIndex, isMyTurn, validStealValue) {
       });
     }
 
+    const isScoreHidden = (currentRoom?.showScore === false && currentRoom?.status !== 'gameover');
+    const scoreDisplay = isScoreHidden
+      ? `🔒 ${p.safeCount} cartas`
+      : `🔒 ${p.safeScore ?? 0} pts (${p.safeCount} cartas)`;
+
     card.innerHTML = `
       <div class="opponent-header">
         <div class="opp-avatar">${renderPelusaAvatar(p.avatar || 1, { size: 'normal' })}</div>
         <div class="opp-info">
           <div class="opp-name">${escapeHtml(p.name)} ${isMe ? '<span class="badge-me">(Tú)</span>' : ''} ${p.isBot ? '<span class="badge-bot">🤖 Bot</span>' : ''} ${isHisTurn ? '<span class="playing-indicator">🎯 Jugando</span>' : ''}</div>
-          <div class="opp-score">🔒 ${p.safeScore} pts (${p.safeCount} cartas)</div>
+          <div class="opp-score">${scoreDisplay}</div>
         </div>
       </div>
       <div class="opp-exposed-section">
@@ -992,14 +1060,34 @@ function syncActionButtons() {
   const isBusted = Boolean(currentRoom.turnState && currentRoom.turnState.isBusted);
   const hasCards = (currentRoom.deckCount || 0) > 0;
 
-  if (!isMyTurn || !hasCards || isBusted) {
+  if (!isMyTurn || isBusted) {
     btnDrawCard.disabled = true;
     btnStopTurn.disabled = true;
+    btnStopTurn.classList.remove('btn-last-stop-pulse');
+    if (!hasCards) {
+      btnDrawCard.innerHTML = '🃏 Montón agotado';
+    }
     return;
   }
 
+  // Si se agotó el montón central de cartas
+  if (!hasCards) {
+    btnDrawCard.disabled = true;
+    btnDrawCard.classList.remove('btn-risk');
+    btnDrawCard.innerHTML = '🃏 Montón agotado';
+
+    // El jugador puede robar a rivales si coincide o decidir plantarse para finalizar la partida
+    btnStopTurn.disabled = isAnimatingCard ? true : false;
+    btnStopTurn.innerHTML = '🛑 Plantarse y Finalizar Partida';
+    btnStopTurn.classList.add('btn-last-stop-pulse', 'btn-safe-pulse');
+    return;
+  }
+
+  // Flujo normal con cartas en el montón
+  btnStopTurn.classList.remove('btn-last-stop-pulse');
   btnDrawCard.disabled = isAnimatingCard;
   btnStopTurn.disabled = isAnimatingCard || !canStop;
+  btnStopTurn.innerHTML = '🛑 Plantarse';
 }
 
 function renderLogs(logs) {
@@ -1030,7 +1118,8 @@ deckPile.onclick = () => {
 
 btnStopTurn.onclick = () => {
   if (!currentRoom || !currentRoom.isMyTurn) return;
-  if (!currentRoom.turnState || !currentRoom.turnState.canStop) return;
+  const isDeckEmpty = (currentRoom.deckCount || 0) === 0;
+  if (!isDeckEmpty && (!currentRoom.turnState || !currentRoom.turnState.canStop)) return;
   isAnimatingCard = false;
   socket.emit('stop_turn');
 };
@@ -1391,3 +1480,96 @@ socket.on('deck_size_updated', ({ deckSize }) => {
   const isHost = currentRoom && currentRoom.isHost;
   updateDeckPresetButtons(deckSize, isHost);
 });
+
+// --- Control de Reglas y Opciones (Estadísticas y Puntuación) ---
+function updateGameRulesUI(showStats, showScore, isHost) {
+  const currentShowStats = (showStats !== false);
+  const currentShowScore = (showScore !== false);
+
+  // Actualizar botones de píldora en Lobby y en Modal durante juego
+  document.querySelectorAll('#stats-pill-selector .rule-pill-btn, #ingame-stats-pill-selector .rule-pill-btn').forEach(btn => {
+    const isTrueBtn = btn.getAttribute('data-stats') === 'true';
+    btn.classList.toggle('active', isTrueBtn === currentShowStats);
+    btn.disabled = !isHost;
+  });
+
+  document.querySelectorAll('#score-pill-selector .rule-pill-btn, #ingame-score-pill-selector .rule-pill-btn').forEach(btn => {
+    const isTrueBtn = btn.getAttribute('data-score') === 'true';
+    btn.classList.toggle('active', isTrueBtn === currentShowScore);
+    btn.disabled = !isHost;
+  });
+
+  if (rulesConfigHint) {
+    rulesConfigHint.innerText = isHost ? 'Configura antes o durante la partida' : 'Elegido por el anfitrión';
+  }
+
+  // Mostrar el botón de engranaje ⚙️ en la barra superior solo si soy el anfitrión
+  if (btnRoomOptions) {
+    btnRoomOptions.style.display = isHost ? 'inline-flex' : 'none';
+  }
+}
+
+// Escuchar cambios en los botones de selección de reglas
+document.querySelectorAll('.rule-pill-btn').forEach(btn => {
+  btn.onclick = () => {
+    const isHost = currentRoom ? currentRoom.isHost : true;
+    if (currentRoom && !isHost) return;
+
+    if (btn.hasAttribute('data-stats')) {
+      const statsVal = btn.getAttribute('data-stats') === 'true';
+      if (currentRoom && currentRoom.code) {
+        socket.emit('set_game_config', { showStats: statsVal });
+      } else {
+        document.querySelectorAll('#stats-pill-selector .rule-pill-btn').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-stats') === (statsVal ? 'true' : 'false'));
+        });
+      }
+    } else if (btn.hasAttribute('data-score')) {
+      const scoreVal = btn.getAttribute('data-score') === 'true';
+      if (currentRoom && currentRoom.code) {
+        socket.emit('set_game_config', { showScore: scoreVal });
+      } else {
+        document.querySelectorAll('#score-pill-selector .rule-pill-btn').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-score') === (scoreVal ? 'true' : 'false'));
+        });
+      }
+    }
+  };
+});
+
+if (btnRoomOptions) {
+  btnRoomOptions.onclick = () => {
+    if (modalGameOptions) modalGameOptions.style.display = 'flex';
+  };
+}
+
+if (btnCloseOptions) {
+  btnCloseOptions.onclick = () => {
+    if (modalGameOptions) modalGameOptions.style.display = 'none';
+  };
+}
+
+socket.on('game_config_updated', ({ showStats, showScore }) => {
+  if (currentRoom) {
+    if (typeof showStats === 'boolean') currentRoom.showStats = showStats;
+    if (typeof showScore === 'boolean') currentRoom.showScore = showScore;
+    updateGameRulesUI(currentRoom.showStats, currentRoom.showScore, currentRoom.isHost);
+
+    if (screenGame.style.display !== 'none' && currentRoom.status === 'playing') {
+      renderProbabilities(currentRoom.probabilities, currentRoom.isMyTurn, currentRoom.turnState?.isBusted);
+      renderOpponents(currentRoom.players, currentRoom.currentTurnIndex, currentRoom.isMyTurn, currentRoom.validStealValue);
+      const me = currentRoom.players?.find(p => p.id === myPlayerId || p.token === playerToken);
+      if (me) {
+        const isScoreHidden = (currentRoom.showScore === false && currentRoom.status !== 'gameover');
+        mySafeScore.innerText = isScoreHidden ? '🔒' : (me.safeScore ?? 0);
+        const myDockLbl = document.getElementById('my-dock-score-lbl');
+        if (myDockLbl) {
+          myDockLbl.innerHTML = isScoreHidden
+            ? `Cartas Seguras (<span id="my-safe-count">${me.safeCount}</span>)`
+            : `Puntos Seguros (<span id="my-safe-count">${me.safeCount}</span>)`;
+        }
+      }
+    }
+  }
+});
+
